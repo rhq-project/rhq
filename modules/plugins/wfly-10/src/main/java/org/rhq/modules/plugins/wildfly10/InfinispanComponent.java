@@ -39,37 +39,39 @@ public class InfinispanComponent extends BaseComponent<ResourceComponent<?>> {
 
         String apiVersion = getServerComponent().getServerPluginConfiguration().getApiVersion();
 
-        if (apiVersion!=null && apiVersion.startsWith("5")) {   // EAP 7.1
-            Address jgroupsAddress = new Address();
-            jgroupsAddress.add("subsystem", "jgroups");
-            ReadResource readResourceOperation = new ReadResource(jgroupsAddress);
-            Result res = getASConnection().execute(readResourceOperation);
-            if (res != null && res.isSuccess()) {
-                ASConnection connection = getASConnection();
-                ConfigurationDefinition configDef = report.getResourceType().getResourceConfigurationDefinition();
-                CreateResourceDelegate createResourceDelegate =
-                        new CreateResourceDelegate(configDef, connection, address);
-                Address createAddressCacheContainer = createResourceDelegate.getCreateAddress(report);
-                Address createAddressTransport = createResourceDelegate.getCreateAddress(report);
-                createAddressTransport.add("transport", "jgroups");
-                CompositeOperation op = new CompositeOperation();
-                op.addStep(createResourceDelegate.getOperation(report, createAddressCacheContainer));
-                op.addStep(createResourceDelegate.getOperation(report, createAddressTransport));
-                Result result = connection.execute(op);
-                if (result.isSuccess()) {
-                    report.setStatus(CreateResourceStatus.SUCCESS);
-                    report.setResourceKey(createAddressCacheContainer.getPath());
-                    report.setResourceName(report.getUserSpecifiedResourceName());
+        if(apiVersion != null) {
+            Double apiV = Double.valueOf(apiVersion);
+            if (apiV >= 5) {   // EAP 7.1 and up
+                Address jgroupsAddress = new Address();
+                jgroupsAddress.add("subsystem", "jgroups");
+                ReadResource readResourceOperation = new ReadResource(jgroupsAddress);
+                Result res = getASConnection().execute(readResourceOperation);
+                if (res != null && res.isSuccess()) {
+                    ASConnection connection = getASConnection();
+                    ConfigurationDefinition configDef = report.getResourceType().getResourceConfigurationDefinition();
+                    CreateResourceDelegate createResourceDelegate =
+                            new CreateResourceDelegate(configDef, connection, address);
+                    Address createAddressCacheContainer = createResourceDelegate.getCreateAddress(report);
+                    Address createAddressTransport = createResourceDelegate.getCreateAddress(report);
+                    createAddressTransport.add("transport", "jgroups");
+                    CompositeOperation op = new CompositeOperation();
+                    op.addStep(createResourceDelegate.getOperation(report, createAddressCacheContainer));
+                    op.addStep(createResourceDelegate.getOperation(report, createAddressTransport));
+                    Result result = connection.execute(op);
+                    if (result.isSuccess()) {
+                        report.setStatus(CreateResourceStatus.SUCCESS);
+                        report.setResourceKey(createAddressCacheContainer.getPath());
+                        report.setResourceName(report.getUserSpecifiedResourceName());
+                    } else {
+                        report.setStatus(CreateResourceStatus.FAILURE);
+                        report.setErrorMessage(result.getFailureDescription());
+                    }
+                    return report;
                 } else {
-                    report.setStatus(CreateResourceStatus.FAILURE);
-                    report.setErrorMessage(result.getFailureDescription());
+                    return super.createResource(report);
                 }
-                return report;
-            } else {
-                return super.createResource(report);
             }
-        } else {
-            return super.createResource(report);
         }
+        return super.createResource(report);
     }
 }

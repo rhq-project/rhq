@@ -2193,11 +2193,12 @@
         </plugin-configuration>
 
         <resource-configuration>
-          <c:simple-property name="binding-type" required="true" type="string" readOnly="false" description="The type of binding to create, may be simple, lookup or object-factory">
+          <c:simple-property name="binding-type" required="true" type="string" readOnly="false" description="The type of binding to create, may be simple, lookup, object-factory or external-context">
             <c:property-options>
               <c:option value="simple"/>
               <c:option value="lookup"/>
               <c:option value="object-factory"/>
+              <c:option value="external-context" />
             </c:property-options>
           </c:simple-property>
           <c:simple-property name="class" required="false" type="string" readOnly="true" description="The object factory class name for object factory bindings"/>
@@ -2206,7 +2207,7 @@
           <c:simple-property name="type" required="false" type="string" readOnly="true" description="The type of the value to bind for simple bindings, this must be a primitive type"/>
           <c:simple-property name="value" required="false" type="string" readOnly="true" description="The value to bind for simple bindings"/>
           <c:simple-property name="cache" required="false" type="boolean" readOnly="true" defaultValue="false" description="If the external context should be cached"/>
-          <c:list-property name="environment" readOnly="true" description="A list of The environment to use on object factory instance retrieval." required="false">
+          <c:list-property name="environment" readOnly="true" description="A list of The environment to use on object factory or external-context instance retrieval." required="false">
             <c:map-property name="environment" readOnly="true" displayName="Environment">
               <c:simple-property name="name" type="string" displayName="Name" required="true"/>
               <c:simple-property name="value" type="string" displayName="Value" required="true"/>
@@ -5917,11 +5918,12 @@
         </plugin-configuration>
 
         <resource-configuration>
-          <c:simple-property name="binding-type" required="true" type="string" readOnly="false" description="The type of binding to create, may be simple, lookup or object-factory">
+          <c:simple-property name="binding-type" required="true" type="string" readOnly="false" description="The type of binding to create, may be simple, lookup, object-factory or external-context.">
             <c:property-options>
               <c:option value="simple"/>
               <c:option value="lookup"/>
               <c:option value="object-factory"/>
+              <c:option value="external-context" />
             </c:property-options>
           </c:simple-property>
           <c:simple-property name="class" required="false" type="string" readOnly="false" description="The object factory class name for object factory bindings"/>
@@ -5930,7 +5932,7 @@
           <c:simple-property name="type" required="false" type="string" readOnly="false" description="The type of the value to bind for simple bindings, this must be a primitive type"/>
           <c:simple-property name="value" required="false" type="string" readOnly="false" description="The value to bind for simple bindings"/>
           <c:simple-property name="cache" required="false" type="boolean" readOnly="false" defaultValue="false" description="If the external context should be cached"/>
-          <c:list-property name="environment" description="A list of The environment to use on object factory instance retrieval." required="false">
+          <c:list-property name="environment" description="A list of The environment to use on object factory or external-context instance retrieval." required="false">
             <c:map-property name="environment" displayName="Environment">
               <c:simple-property name="name" type="string" displayName="Name" required="true"/>
               <c:simple-property name="value" type="string" displayName="Value" required="true"/>
@@ -9008,11 +9010,12 @@
       </plugin-configuration>
 
       <resource-configuration>
-        <c:simple-property name="binding-type" required="true" type="string" readOnly="false" description="The type of binding to create, may be simple, lookup or object-factory">
+        <c:simple-property name="binding-type" required="true" type="string" readOnly="false" description="The type of binding to create, may be simple, lookup, object-factory or external-context">
           <c:property-options>
             <c:option value="simple"/>
             <c:option value="lookup"/>
             <c:option value="object-factory"/>
+            <c:option value="external-context" />
           </c:property-options>
         </c:simple-property>
         <c:simple-property name="class" required="false" type="string" readOnly="false" description="The object factory class name for object factory bindings"/>
@@ -9021,7 +9024,7 @@
         <c:simple-property name="type" required="false" type="string" readOnly="false" description="The type of the value to bind for simple bindings, this must be a primitive type"/>
         <c:simple-property name="value" required="false" type="string" readOnly="false" description="The value to bind for simple bindings"/>
         <c:simple-property name="cache" required="false" type="boolean" readOnly="false" defaultValue="false" description="If the external context should be cached"/>
-        <c:list-property name="environment" description="A list of The environment to use on object factory instance retrieval." required="false">
+        <c:list-property name="environment" description="A list of The environment to use on object factory or external-context instance retrieval." required="false">
           <c:map-property name="environment" displayName="Environment">
             <c:simple-property name="name" type="string" displayName="Name" required="true"/>
             <c:simple-property name="value" type="string" displayName="Value" required="true"/>

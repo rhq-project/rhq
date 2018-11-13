@@ -467,8 +467,8 @@
       <metric property="MaxUsedCount" description="The maximum number of connections used"/>
       <metric property="MaxWaitTime" units="milliseconds" description="The maximum wait time for a connection" displayType="summary"/>
       <metric property="TimedOut" description="The timed out count" measurementType="trendsup" displayType="summary"/>
-      <metric property="TotalCreationTime" description="The total time spent creating physical connections" measurementType="trendsup" units="milliseconds"/>
-      <metric property="TotalBlockingTime" description="The total blocking time" measurementType="trendsup" units="milliseconds"/>
+      <metric property="TotalCreationTime" measurementType="trendsup" description="The total time spent creating physical connections" measurementType="trendsup" units="milliseconds"/>
+      <metric property="TotalBlockingTime" measurementType="trendsup" description="The total blocking time" measurementType="trendsup" units="milliseconds"/>
       <metric property="connectionAvailable" displayName="Connection Available?" dataType="trait" displayType="summary" defaultInterval="300000"/>
       <metric property="min-pool-size" displayName="Min Pool Size setting" defaultOn="true" defaultInterval="14400000" description="The min pool size setting"/>
       <metric property="max-pool-size" displayName="Max Pool Size setting" defaultOn="true" defaultInterval="14400000" description="The max pool size setting"/>
@@ -3035,10 +3035,10 @@
 
           <metric property="bytes-received" description="The number of bytes that have been received by this listener"/>
           <metric property="bytes-sent" description="The number of bytes that have been sent out on this listener"/>
-          <metric property="error-count" description="The number of 500 responses that have been sent by this listener"/>
+          <metric property="error-count" measurementType="trendsup" description="The number of 500 responses that have been sent by this listener"/>
           <metric property="max-processing-time" description="The maximum processing time taken by a request on this listener"/>
-          <metric property="processing-time" description="The total processing time of all requests handed by this listener"/>
-          <metric property="request-count" description="The number of requests this listener has served"/>
+          <metric property="processing-time" measurementType="trendsup" description="The total processing time of all requests handed by this listener"/>
+          <metric property="request-count" measurementType="trendsup" description="The number of requests this listener has served"/>
 
           <resource-configuration>
             <c:simple-property name="allow-encoded-slash" required="false" type="boolean" readOnly="true" defaultValue="false" description="If a request comes in with encoded / characters (i.e. &#37;2F), will these be decoded. The default value is false."/>
@@ -3200,10 +3200,10 @@
 
           <metric property="bytes-received" units="bytes" description="The number of bytes that have been received by this listener"/>
           <metric property="bytes-sent" units="bytes" description="The number of bytes that have been sent out on this listener"/>
-          <metric property="error-count" description="The number of 500 responses that have been sent by this listener"/>
+          <metric property="error-count" measurementType="trendsup" description="The number of 500 responses that have been sent by this listener"/>
           <metric property="max-processing-time" units="nanoseconds" description="The maximum processing time taken by a request on this listener"/>
           <metric property="processing-time" units="nanoseconds" description="The total processing time of all requests handed by this listener"/>
-          <metric property="request-count" description="The number of requests this listener has served"/>
+          <metric property="request-count" measurementType="trendsup" description="The number of requests this listener has served"/>
 
           <resource-configuration>
             <c:simple-property name="allow-encoded-slash" required="false" type="boolean" readOnly="true" defaultValue="false" description="If a request comes in with encoded / characters (i.e. &#37;2F), will these be decoded. The default value is false."/>
@@ -3439,7 +3439,7 @@
 
           <metric property="current-thread-count" description="The current number of threads in the pool."/>
           <metric property="largest-thread-count" description="The largest number of threads that have ever simultaneously been in the pool."/>
-          <metric property="rejected-count" description="The number of tasks that have been passed to the handoff-executor (if one is specified) or discarded."/>
+          <metric property="rejected-count" measurementType="trendsup" description="The number of tasks that have been passed to the handoff-executor (if one is specified) or discarded."/>
 
           <resource-configuration>
             <c:simple-property name="allow-core-timeout" required="false" type="boolean" readOnly="true" defaultValue="false" displayName="Allow Core Timeout" description="Whether core threads may time out. The default value is false."/>
@@ -3475,7 +3475,7 @@
 
           <metric property="current-thread-count" description="The current number of threads in the pool."/>
           <metric property="largest-thread-count" description="The largest number of threads that have ever simultaneously been in the pool."/>
-          <metric property="rejected-count" description="The number of tasks that have been passed to the handoff-executor (if one is specified) or discarded."/>
+          <metric property="rejected-count" measurementType="trendsup" description="The number of tasks that have been passed to the handoff-executor (if one is specified) or discarded."/>
 
           <resource-configuration>
             <c:simple-property name="allow-core-timeout" required="false" type="boolean" readOnly="true" defaultValue="false" displayName="Allow Core Timeout" description="Whether core threads may time out. The default value is false."/>
@@ -3798,11 +3798,11 @@
         </plugin-configuration>
 
         <metric property="active-count" description="The approximate number of threads that are actively executing tasks."/>
-        <metric property="completed-task-count" description="The approximate total number of tasks that have completed execution."/>
+        <metric property="completed-task-count" measurementType="trendsup" description="The approximate total number of tasks that have completed execution."/>
         <metric property="current-thread-count" description="The current number of threads in the pool."/>
         <metric property="largest-thread-count" description="The largest number of threads that have ever simultaneously been in the pool."/>
-        <metric property="rejected-count" description="The number of tasks that have been rejected."/>
-        <metric property="task-count" description="The approximate total number of tasks that have ever been scheduled for execution."/>
+        <metric property="rejected-count" measurementType="trendsup" description="The number of tasks that have been rejected."/>
+        <metric property="task-count" measurementType="trendsup" description="The approximate total number of tasks that have ever been scheduled for execution."/>
 
         <resource-configuration>
           <c:map-property name="keepalive-time" readOnly="true" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
@@ -4058,11 +4058,11 @@
         </plugin-configuration>
 
         <metric property="active-count" description="The approximate number of threads that are actively executing tasks."/>
-        <metric property="completed-task-count" description="The approximate total number of tasks that have completed execution."/>
+        <metric property="completed-task-count" measurementType="trendsup" description="The approximate total number of tasks that have completed execution."/>
         <metric property="current-thread-count" description="The current number of threads in the pool."/>
         <metric property="largest-thread-count" description="The largest number of threads that have ever simultaneously been in the pool."/>
-        <metric property="rejected-count" description="The number of tasks that have been rejected."/>
-        <metric property="task-count" description="The approximate total number of tasks that have ever been scheduled for execution."/>
+        <metric property="rejected-count" measurementType="trendsup" description="The number of tasks that have been rejected."/>
+        <metric property="task-count" measurementType="trendsup" description="The approximate total number of tasks that have ever been scheduled for execution."/>
 
         <resource-configuration>
           <c:map-property name="keepalive-time" required="false" readOnly="false" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
@@ -7031,10 +7031,10 @@
 
           <metric property="bytes-received" description="The number of bytes that have been received by this listener"/>
           <metric property="bytes-sent" description="The number of bytes that have been sent out on this listener"/>
-          <metric property="error-count" description="The number of 500 responses that have been sent by this listener"/>
+          <metric property="error-count" measurementType="trendsup" description="The number of 500 responses that have been sent by this listener"/>
           <metric property="max-processing-time" description="The maximum processing time taken by a request on this listener"/>
-          <metric property="processing-time" description="The total processing time of all requests handed by this listener"/>
-          <metric property="request-count" description="The number of requests this listener has served"/>
+          <metric property="processing-time" measurementType="trendsup" description="The total processing time of all requests handed by this listener"/>
+          <metric property="request-count" measurementType="trendsup" description="The number of requests this listener has served"/>
 
           <resource-configuration>
             <c:simple-property name="allow-encoded-slash" required="false" type="boolean" readOnly="false" defaultValue="false" description="If a request comes in with encoded / characters (i.e. &#37;2F), will these be decoded. The default value is false."/>
@@ -7207,10 +7207,10 @@
 
           <metric property="bytes-received" units="bytes" description="The number of bytes that have been received by this listener"/>
           <metric property="bytes-sent" units="bytes" description="The number of bytes that have been sent out on this listener"/>
-          <metric property="error-count" description="The number of 500 responses that have been sent by this listener"/>
+          <metric property="error-count" measurementType="trendsup" description="The number of 500 responses that have been sent by this listener"/>
           <metric property="max-processing-time" units="nanoseconds" description="The maximum processing time taken by a request on this listener"/>
           <metric property="processing-time" units="nanoseconds" description="The total processing time of all requests handed by this listener"/>
-          <metric property="request-count" description="The number of requests this listener has served"/>
+          <metric property="request-count" measurementType="trendsup" description="The number of requests this listener has served"/>
 
           <resource-configuration>
             <c:simple-property name="allow-encoded-slash" required="false" type="boolean" readOnly="false" defaultValue="false" description="If a request comes in with encoded / characters (i.e. &#37;2F), will these be decoded. The default value is false."/>
@@ -9349,9 +9349,9 @@
 
       <metric property="thread-count" description="The current number of live threads including both daemon and non-daemon threads."/>
       <metric property="peak-thread-count" description="The peak live thread count since the Java virtual machine started or peak was reset."/>
-      <metric property="total-started-thread-count" description="The total number of threads created and also started since the Java virtual machine started."/>
+      <metric property="total-started-thread-count" measurementType="trendsup" description="The total number of threads created and also started since the Java virtual machine started."/>
       <metric property="daemon-thread-count" description="The current number of live daemon threads."/>
-      <metric property="current-thread-cpu-time" description="The total CPU time for the current thread in nanoseconds, or -1 if 'thread-cpu-time-enabled' is 'false'. A Java virtual machine implementation may not support CPU time measurement. If 'thread-cpu-time-supported', is 'false' undefined."/>
+      <metric property="current-thread-cpu-time" measurementType="trendsup" description="The total CPU time for the current thread in nanoseconds, or -1 if 'thread-cpu-time-enabled' is 'false'. A Java virtual machine implementation may not support CPU time measurement. If 'thread-cpu-time-supported', is 'false' undefined."/>
       <metric property="current-thread-user-time" description="The CPU time that the current thread has executed in user mode in nanoseconds, or -1 if 'thread-cpu-time-enabled' is 'false'. A Java virtual machine implementation may not support CPU time measurement. If 'thread-cpu-time-supported', is 'false' the result will be undefined "/>
       <resource-configuration>
         <c:simple-property name="thread-contention-monitoring-enabled" required="false" type="boolean" readOnly="false" description="Whether thread contention monitoring is enabled."/>
@@ -9427,7 +9427,7 @@
         <metric property="collection-usage:used" displayName="Collection Usage - Used" description="The amount of used memory in bytes."/>
         <metric property="collection-usage:committed" displayName="Collection Usage - Committed" description="The amount of memory in bytes that is committed for the Java virtual machine to use."/>
         <metric property="collection-usage:max" displayName="Collection Usage - Max" description="The maximum amount of memory in bytes that can be used for memory management."/>
-        <metric property="collection-usage-threshold-count" description="The number of times that the Java virtual machine has detected that the memory usage has reached or exceeded the collection usage threshold. A memory pool may not support a collection usage threshold. If &apos;collection&#45;usage&#45;threshold&#45;supported&apos;, is &apos;false&apos; trying to read this attribute via the &apos;read&#45;attribute&apos; operation will result in failure, and the value of this attribute in the result of a &apos;read&#45;resource&apos; operation will be &apos;undefined&apos;."/>
+        <metric property="collection-usage-threshold-count" measurementType="trendsup" description="The number of times that the Java virtual machine has detected that the memory usage has reached or exceeded the collection usage threshold. A memory pool may not support a collection usage threshold. If &apos;collection&#45;usage&#45;threshold&#45;supported&apos;, is &apos;false&apos; trying to read this attribute via the &apos;read&#45;attribute&apos; operation will result in failure, and the value of this attribute in the result of a &apos;read&#45;resource&apos; operation will be &apos;undefined&apos;."/>
         <metric property="collection-usage-threshold-exceeded" dataType="trait" description="Whether the memory usage of this memory pool after the most recent collection on which the Java virtual machine has expended effort has reached or exceeded its collection usage threshold. A memory pool may not support a collection usage threshold. If &apos;collection&#45;usage&#45;threshold&#45;supported&apos;, is &apos;false&apos; trying to read this attribute via the &apos;read&#45;attribute&apos; operation will result in failure, and the value of this attribute in the result of a &apos;read&#45;resource&apos; operation will be &apos;undefined&apos;."/>
         <metric property="collection-usage-threshold-supported" dataType="trait" description="Whether this memory pool supports a collection usage threshold."/>
         <metric property="name" dataType="trait" description="The name representing this memory pool."/>
@@ -9440,7 +9440,7 @@
         <metric property="usage:used" displayName="Usage - Used" description="The amount of used memory in bytes."/>
         <metric property="usage:committed" displayName="Usage - Committed" description="The amount of memory in bytes that is committed for the Java virtual machine to use."/>
         <metric property="usage:max" displayName="Usage - Max" description="The maximum amount of memory in bytes that can be used for memory management."/>
-        <metric property="usage-threshold-count" description="The number of times that the memory usage has crossed the usage threshold. A memory pool may not support a usage threshold. If &apos;usage&#45;threshold&#45;supported&apos;, is &apos;false&apos; trying to read this attribute via the &apos;read&#45;attribute&apos; operation will result in failure, and the value of this attribute in the result of a &apos;read&#45;resource&apos; operation will be &apos;undefined&apos;."/>
+        <metric property="usage-threshold-count" measurementType="trendsup" description="The number of times that the memory usage has crossed the usage threshold. A memory pool may not support a usage threshold. If &apos;usage&#45;threshold&#45;supported&apos;, is &apos;false&apos; trying to read this attribute via the &apos;read&#45;attribute&apos; operation will result in failure, and the value of this attribute in the result of a &apos;read&#45;resource&apos; operation will be &apos;undefined&apos;."/>
         <metric property="usage-threshold-exceeded" dataType="trait" description="Whether the memory usage of this memory pool reaches or exceeds its usage threshold value.  A memory pool may not support a usage threshold. If &apos;usage&#45;threshold&#45;supported&apos;, is &apos;false&apos; trying to read this attribute via the &apos;read&#45;attribute&apos; operation will result in failure, and the value of this attribute in the result of a &apos;read&#45;resource&apos; operation will be &apos;undefined&apos;."/>
         <metric property="usage-threshold-supported" dataType="trait" description="Whether this memory pool supports usage threshold."/>
         <metric property="valid" dataType="trait" description="Whether this memory pool is valid in the Java virtual machine. A memory pool becomes invalid once the Java virtual machine removes it from the memory system."/>
@@ -9745,10 +9745,10 @@
 
         <metric property="bytes-received" description="The number of bytes that have been received by this listener"/>
         <metric property="bytes-sent" description="The number of bytes that have been sent out on this listener"/>
-        <metric property="error-count" description="The number of 500 responses that have been sent by this listener"/>
+        <metric property="error-count" measurementType="trendsup" description="The number of 500 responses that have been sent by this listener"/>
         <metric property="max-processing-time" description="The maximum processing time taken by a request on this listener"/>
-        <metric property="processing-time" description="The total processing time of all requests handed by this listener"/>
-        <metric property="request-count" description="The number of requests this listener has served"/>
+        <metric property="processing-time" measurementType="trendsup" description="The total processing time of all requests handed by this listener"/>
+        <metric property="request-count" measurementType="trendsup" description="The number of requests this listener has served"/>
 
         <resource-configuration>
           <c:simple-property name="allow-encoded-slash" required="false" type="boolean" readOnly="false" defaultValue="false" description="If a request comes in with encoded / characters (i.e. &#37;2F), will these be decoded. The default value is false."/>
@@ -11404,8 +11404,8 @@
       <metric property="MaxUsedCount" description="The maximum number of connections used"/>
       <metric property="MaxWaitTime" description="The maximum wait time for a connection"/>
       <metric property="TimedOut" description="The timed out count"/>
-      <metric property="TotalBlockingTime" description="The total blocking time"/>
-      <metric property="TotalCreationTime" description="The total time spent creating physical connections"/>
+      <metric property="TotalBlockingTime" measurementType="trendsup" description="The total blocking time"/>
+      <metric property="TotalCreationTime" measurementType="trendsup" description="The total time spent creating physical connections"/>
 
     </service>
   </service>
@@ -12080,10 +12080,10 @@
       </plugin-configuration>
 
       <metric property="pool-available-count" description="The number of available (i.e. not in use) instances in the pool."/>
-      <metric property="pool-create-count" description="The number of bean instances that have been created."/>
+      <metric property="pool-create-count" measurementType="trendsup" description="The number of bean instances that have been created."/>
       <metric property="pool-current-size" description="The current size of the pool."/>
       <metric property="pool-max-size" description="The maximum size of the pool."/>
-      <metric property="pool-remove-count" description="The number of bean instances that have been removed."/>
+      <metric property="pool-remove-count" measurementType="trendsup" description="The number of bean instances that have been removed."/>
       &ejb3BeanStats;
 
       <resource-configuration>
@@ -12167,10 +12167,10 @@
       </plugin-configuration>
 
       <metric property="pool-available-count" description="The number of available (i.e. not in use) instances in the pool."/>
-      <metric property="pool-create-count" description="The number of bean instances that have been created."/>
+      <metric property="pool-create-count" measurementType="trendsup" description="The number of bean instances that have been created."/>
       <metric property="pool-current-size" description="The current size of the pool."/>
       <metric property="pool-max-size" description="The maximum size of the pool."/>
-      <metric property="pool-remove-count" description="The number of bean instances that have been removed."/>
+      <metric property="pool-remove-count" measurementType="trendsup" description="The number of bean instances that have been removed."/>
       &ejb3BeanStats;
 
       <resource-configuration>
@@ -12213,10 +12213,10 @@
       </plugin-configuration>
 
       <metric property="pool-available-count" description="The number of available (i.e. not in use) instances in the pool."/>
-      <metric property="pool-create-count" description="The number of bean instances that have been created."/>
+      <metric property="pool-create-count" measurementType="trendsup" description="The number of bean instances that have been created."/>
       <metric property="pool-current-size" description="The current size of the pool."/>
       <metric property="pool-max-size" description="The maximum size of the pool."/>
-      <metric property="pool-remove-count" description="The number of bean instances that have been removed."/>
+      <metric property="pool-remove-count" measurementType="trendsup" description="The number of bean instances that have been removed."/>
       &ejb3BeanStats;
 
       <resource-configuration>
@@ -12279,12 +12279,12 @@
       </plugin-configuration>
 
       <metric property="average-processing-time" description="Average endpoint processing time."/>
-      <metric property="fault-count" description="Count of faults the endpoint generated."/>
+      <metric property="fault-count" measurementType="trendsup" description="Count of faults the endpoint generated."/>
       <metric property="max-processing-time" description="Maximal endpoint processing time."/>
       <metric property="min-processing-time" description="Minimal endpoint processing time."/>
-      <metric property="request-count" description="Count of requests the endpoint processed."/>
-      <metric property="response-count" description="Count of responses the endpoint generated."/>
-      <metric property="total-processing-time" description="Total endpoint processing time."/>
+      <metric property="request-count" measurementType="trendsup" description="Count of requests the endpoint processed."/>
+      <metric property="response-count" measurementType="trendsup" description="Count of responses the endpoint generated."/>
+      <metric property="total-processing-time" measurementType="trendsup" description="Total endpoint processing time."/>
 
       <resource-configuration>
         <c:simple-property name="class" required="false" type="string" readOnly="true" description="Webservice endpoint class."/>
@@ -12426,9 +12426,9 @@
         </plugin-configuration>
 
         <metric property="element-count-in-memory" description="Number of cacheable entities/collections currently stored in memory."/>
-        <metric property="hit-count" description="Number of cacheable entities/collections successfully retrieved from the cache."/>
-        <metric property="miss-count" description="Number of cacheable entities/collections not found in the cache and loaded."/>
-        <metric property="put-count" description="Number of cacheable entities/collections put in the cache."/>
+        <metric property="hit-count" measurementType="trendsup" description="Number of cacheable entities/collections successfully retrieved from the cache."/>
+        <metric property="miss-count" measurementType="trendsup" description="Number of cacheable entities/collections not found in the cache and loaded."/>
+        <metric property="put-count" measurementType="trendsup" description="Number of cacheable entities/collections put in the cache."/>
       </service>
 
       <service name="Entity"
@@ -12681,7 +12681,7 @@
 
         <metric property="current-thread-count" description="The current number of threads in the pool."/>
         <metric property="largest-thread-count" description="The largest number of threads that have ever simultaneously been in the pool."/>
-        <metric property="rejected-count" description="The number of tasks that have been passed to the handoff-executor (if one is specified) or discarded."/>
+        <metric property="rejected-count" measurementType="trendsup" description="The number of tasks that have been passed to the handoff-executor (if one is specified) or discarded."/>
 
         <resource-configuration>
           &sharedThreadPoolResourceConfig;
@@ -12717,7 +12717,7 @@
 
         <metric property="current-thread-count" description="The current number of threads in the pool."/>
         <metric property="largest-thread-count" description="The largest number of threads that have ever simultaneously been in the pool."/>
-        <metric property="rejected-count" description="The number of tasks that have been passed to the handoff-executor (if one is specified) or discarded."/>
+        <metric property="rejected-count" measurementType="trendsup" description="The number of tasks that have been passed to the handoff-executor (if one is specified) or discarded."/>
 
         <resource-configuration>
           &sharedThreadPoolResourceConfig;
@@ -13286,11 +13286,11 @@
       </plugin-configuration>
 
       <metric property="active-count" description="The approximate number of threads that are actively executing tasks."/>
-      <metric property="completed-task-count" description="The approximate total number of tasks that have completed execution."/>
+      <metric property="completed-task-count" measurementType="trendsup" description="The approximate total number of tasks that have completed execution."/>
       <metric property="current-thread-count" description="The current number of threads in the pool."/>
       <metric property="largest-thread-count" description="The largest number of threads that have ever simultaneously been in the pool."/>
-      <metric property="rejected-count" description="The number of tasks that have been rejected."/>
-      <metric property="task-count" description="The approximate total number of tasks that have ever been scheduled for execution."/>
+      <metric property="rejected-count" measurementType="trendsup" description="The number of tasks that have been rejected."/>
+      <metric property="task-count" measurementType="trendsup" description="The approximate total number of tasks that have ever been scheduled for execution."/>
 
       <resource-configuration>
         <c:map-property name="keepalive-time" required="false" readOnly="false" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
@@ -13359,11 +13359,11 @@
       </plugin-configuration>
 
       <metric property="active-count" description="The approximate number of threads that are actively executing tasks."/>
-      <metric property="completed-task-count" description="The approximate total number of tasks that have completed execution."/>
+      <metric property="completed-task-count" measurementType="trendsup" description="The approximate total number of tasks that have completed execution."/>
       <metric property="current-thread-count" description="The current number of threads in the pool."/>
       <metric property="largest-thread-count" description="The largest number of threads that have ever simultaneously been in the pool."/>
-      <metric property="rejected-count" description="The number of tasks that have been rejected."/>
-      <metric property="task-count" description="The approximate total number of tasks that have ever been scheduled for execution."/>
+      <metric property="rejected-count" measurementType="trendsup" description="The number of tasks that have been rejected."/>
+      <metric property="task-count" measurementType="trendsup" description="The approximate total number of tasks that have ever been scheduled for execution."/>
 
       <resource-configuration>
         <c:map-property name="keepalive-time" required="false" readOnly="false" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">

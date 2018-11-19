@@ -469,8 +469,8 @@
       <metric property="MaxUsedCount" description="The maximum number of connections used"/>
       <metric property="MaxWaitTime" units="milliseconds" description="The maximum wait time for a connection" displayType="summary"/>
       <metric property="TimedOut" description="The timed out count" measurementType="trendsup" displayType="summary"/>
-      <metric property="TotalCreationTime" measurementType="trendsup" description="The total time spent creating physical connections" measurementType="trendsup" units="milliseconds"/>
-      <metric property="TotalBlockingTime" measurementType="trendsup" description="The total blocking time" measurementType="trendsup" units="milliseconds"/>
+      <metric property="TotalCreationTime" measurementType="trendsup" description="The total time spent creating physical connections" units="milliseconds"/>
+      <metric property="TotalBlockingTime" measurementType="trendsup" description="The total blocking time" units="milliseconds"/>
       <metric property="connectionAvailable" displayName="Connection Available?" dataType="trait" displayType="summary" defaultInterval="300000"/>
       <metric property="min-pool-size" displayName="Min Pool Size setting" defaultOn="true" defaultInterval="14400000" description="The min pool size setting"/>
       <metric property="max-pool-size" displayName="Max Pool Size setting" defaultOn="true" defaultInterval="14400000" description="The max pool size setting"/>

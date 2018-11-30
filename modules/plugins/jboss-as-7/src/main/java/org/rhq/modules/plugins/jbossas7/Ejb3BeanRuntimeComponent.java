@@ -148,24 +148,36 @@ public class Ejb3BeanRuntimeComponent extends BaseComponent<BaseComponent<?>> {
                         continue;
                     }
 
+                    Address runtimeMBeanAddress;
+
+                    if ((BaseComponent<?>) getServerComponent() instanceof HostControllerComponent) {
+                        runtimeMBeanAddress = new Address(findManagedASServerComponent().getServerAddress());
+                        runtimeMBeanAddress.add(RUNTIME_MBEAN_ADDRESS);
+                    } else {
+                        runtimeMBeanAddress = RUNTIME_MBEAN_ADDRESS;
+                    }
+
                     //first we need to know since when the values were collected
-                    result = getASConnection().execute(new ReadAttribute(RUNTIME_MBEAN_ADDRESS, START_TIME_ATTRIBUTE));
-                    long serverStartTime = (Long) result.getResult();
+                    result = getASConnection().execute(new ReadAttribute(runtimeMBeanAddress, START_TIME_ATTRIBUTE));
 
-                    //now process the calltime value
-                    String requestedMetric = request.getName().substring(CALLTIME_METRIC_NAME_PREFIX_LENGTH);
+                    if(result != null && result.getResult() != null) {
+                        long serverStartTime = (Long) result.getResult();
 
-                    Stats lastCollection = getLastCallTimeCollection(requestedMetric, allMethodStats, serverStartTime);
-                    Stats thisCollection = Stats.fromMap(allMethodStats, requestedMetric, System.currentTimeMillis(),
-                        serverStartTime);
+                        //now process the calltime value
+                        String requestedMetric = request.getName().substring(CALLTIME_METRIC_NAME_PREFIX_LENGTH);
 
-                    CallTimeData callTime = new CallTimeData(request);
+                        Stats lastCollection = getLastCallTimeCollection(requestedMetric, allMethodStats, serverStartTime);
+                        Stats thisCollection = Stats.fromMap(allMethodStats, requestedMetric, System.currentTimeMillis(),
+                                serverStartTime);
 
-                    fillCallTimeData(callTime, thisCollection, lastCollection);
+                        CallTimeData callTime = new CallTimeData(request);
 
-                    saveCallTimeCollection(requestedMetric, thisCollection);
+                        fillCallTimeData(callTime, thisCollection, lastCollection);
 
-                    report.addData(callTime);
+                        saveCallTimeCollection(requestedMetric, thisCollection);
+
+                        report.addData(callTime);
+                    }
                 } else {
                     OSGiVersion currentAsVersion = getASVersion();
                     if (currentAsVersion == null) {

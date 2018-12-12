@@ -238,7 +238,7 @@ public final class ServerControl {
         /**
          * runs dummy CLI operation (:whoami) in order to detect, whether server (if configured to SSL)
          * requires user to accept server's certificate. When running this command, jboss-cli can hang
-         * and wait for user input. For this reason, there is 10s timeout for this process to finish (hopefully 
+         * and wait for user input. For this reason, there is 30s timeout for this process to finish (hopefully
          * it is enough even in very slow environments)
          * @param
          * @return ProcessExecutionResults in case server <strong>requires</strong> accepting SSL certificate and subsequent 
@@ -249,7 +249,7 @@ public final class ServerControl {
             String rhqPid = UUID.randomUUID().toString();
             ProcessExecutionResults result = ServerControl.onServer(pluginConfiguration, serverMode, systemInfo)
                 .killingOnTimeout(true)
-                .waitingFor(10 * 1000L)
+                .waitingFor(30 * 1000L)
                 .ignoreOutput()// avoid potential OOM https://bugzilla.redhat.com/show_bug.cgi?id=1238263
                 .cli()
                     .disconnected(false)

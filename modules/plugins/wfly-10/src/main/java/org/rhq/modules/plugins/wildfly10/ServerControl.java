@@ -216,13 +216,23 @@ public final class ServerControl {
          * whether to execute dummy CLI check prior running desired command
          */
         private boolean checkCertificate = true;
+        private long detectCertificateTimeout = 10 * 1000L;
 
 
         Cli() {
+            final String RHQ_AGENT_PLUGIN_WILDFLY10_DETECT_CERTIFICATE_TIMEOUT = "rhq.agent.plugin.wildfly10.detect-certificate-timeout";
             // When running the CLI on Windows, make sure no "pause" message is shown after script execution
             // Otherwise the CLI process will just keep running so we'll never get the exit code
             if (systemInfo.getOperatingSystemType() == OperatingSystemType.WINDOWS) {
                 startScriptEnv.put("NOPAUSE", "1");
+            }
+            String detectCertificateTimeoutEnv = System.getProperty(RHQ_AGENT_PLUGIN_WILDFLY10_DETECT_CERTIFICATE_TIMEOUT);
+            if (detectCertificateTimeoutEnv != null && !detectCertificateTimeoutEnv.trim().isEmpty()) {
+                try {
+                    this.detectCertificateTimeout = Long.parseLong(detectCertificateTimeoutEnv) * 1000L;
+                } catch (NumberFormatException ex) {
+                    LOG.warn("Unable to parse the certificate timeout to a long: [" + detectCertificateTimeoutEnv + "]", ex);
+                }
             }
         }
 
@@ -250,7 +260,7 @@ public final class ServerControl {
             String rhqPid = UUID.randomUUID().toString();
             ProcessExecutionResults result = ServerControl.onServer(pluginConfiguration, serverMode, systemInfo)
                 .killingOnTimeout(true)
-                .waitingFor(10 * 1000L)
+                .waitingFor(detectCertificateTimeout)
                 .ignoreOutput()// avoid potential OOM https://bugzilla.redhat.com/show_bug.cgi?id=1238263
                 .cli()
                     .disconnected(false)

@@ -1679,7 +1679,7 @@
                            description="The data directory."/>
         <c:simple-property name="deploy-dir" required="true" type="string" readOnly="true"
                            description="Deprecated variant of &apos;content&#45;dir&apos;."/>
-        <c:simple-property name="ext-dirs" required="true" type="string" readOnly="true"
+        <c:simple-property name="ext-dirs" required="false" type="string" readOnly="true"
                            description="A list of ext directories."/>
         <c:simple-property name="home-dir" required="true" type="string" readOnly="true"
                            description="The home directory for JBoss Application Server."/>

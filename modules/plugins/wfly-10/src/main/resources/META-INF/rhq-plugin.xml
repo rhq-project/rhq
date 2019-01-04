@@ -13321,7 +13321,7 @@
 
   <service name="EJB3"
            discovery="SubsystemDiscovery"
-           class="Ejb3Component"
+           class="BaseComponent"
            description="The configuration of the ejb3 subsystem."
            singleton="true"
            subCategory="Subsystems|Container">
@@ -13335,7 +13335,6 @@
     </plugin-configuration>
 
     <resource-configuration>
-      <c:simple-property name="default-clustered-sfsb-cache" required="false" type="string" readOnly="false" description="Name of the default stateful bean cache, which will be applicable to all clustered stateful EJBs, unless overridden at the deployment or bean level"/>
       <c:simple-property name="default-entity-bean-instance-pool" required="false" type="string" readOnly="false" description="Name of the default entity bean instance pool, which will be applicable to all entity beans, unless overridden at the deployment or bean level"/>
       <c:simple-property name="default-entity-bean-optimistic-locking" required="false" type="boolean" readOnly="false" description="If set to true entity beans will use optimistic locking by default"/>
       <c:simple-property name="default-mdb-instance-pool" required="false" type="string" readOnly="false" description="Name of the default MDB instance pool, which will be applicable to all MDBs, unless overridden at the deployment or bean level"/>

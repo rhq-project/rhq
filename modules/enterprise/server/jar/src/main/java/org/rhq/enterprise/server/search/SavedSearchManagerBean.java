@@ -39,7 +39,7 @@ import org.rhq.enterprise.server.util.CriteriaQueryRunner;
  * @author Joseoh Marques
  */
 @Stateless
-public class SavedSearchManagerBean implements SavedSearchManagerLocal /* local already implements remote interface */{
+public class SavedSearchManagerBean implements SavedSearchManagerLocal, SavedSearchManagerRemote {
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;

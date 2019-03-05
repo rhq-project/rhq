@@ -173,7 +173,7 @@ public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup, org.rhq.c
         final FormItemIcon attentionIcon = new FormItemIcon();
         String successIconPath = "[SKIN]/actions/ok.png";
         String failedIconPath = "[SKIN]/actions/exclamation.png";
-        String loadingIconPath = "[SKIN]/loading.gif";
+        String loadingIconPath = "[SKIN]/loadingSmall.gif";
         String attentionIconPath = "[SKIN]/Dialog/warn.png";
         loadingIcon.setSrc(loadingIconPath);
         successIcon.setSrc(successIconPath);

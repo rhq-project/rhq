@@ -88,11 +88,12 @@ public class ConfigurationClassBuilder {
     }
 
     public static CtClass translateConfiguration(ClassPool cp, ConfigurationDefinition def) throws NotFoundException {
+        final String OPERATION_RESULT = "operationResult";
         if (def == null) {
             return CtClass.voidType;
-        } else if (def.getPropertyDefinitionSimple("operationResult") != null) {
+        } else if (def.get(OPERATION_RESULT) != null && def.get(OPERATION_RESULT) instanceof PropertyDefinitionSimple) {
             // Its a simple type
-            return getSimpleTypeClass(cp, def.getPropertyDefinitionSimple("operationResult"));
+            return getSimpleTypeClass(cp, def.getPropertyDefinitionSimple(OPERATION_RESULT));
         } else {
 
             // TODO GH: Build a custom type?

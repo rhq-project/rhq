@@ -638,8 +638,11 @@ SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.name(), ""
             }
             //
             Map<String, String> entry = new HashMap<String, String>();
-            String name = (String) si.getAttributes().get("cn").get();
-            name = name.trim();
+            Attribute nameAttribute = si.getAttributes().get("cn");
+            if (nameAttribute == null) {
+                continue;
+            }
+            String name = ((String) nameAttribute.get()).trim();
             Attribute desc = si.getAttributes().get("description");
             String description = desc != null ? (String) desc.get() : "";
             description = description.trim();

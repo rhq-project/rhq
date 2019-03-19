@@ -194,6 +194,9 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
     private String buildLiveValue(MetricDisplaySummary from) {
         StringBuilder sb = new StringBuilder();
         for (MeasurementData measurementData : liveMeasurementDataSet) {
+            if(measurementData.getValue() == null) {
+                continue;
+            }
             if (from.getScheduleId() == measurementData.getScheduleId()) {
                 double doubleValue;
                 if (measurementData.getValue() instanceof Number) {

@@ -304,7 +304,13 @@ public class FileHashcodeMap extends TreeMap<String, String> {
         if (level == 0) {
             path = fileOrDir.getName();
         } else {
-            path = fileOrDir.getAbsolutePath().substring(rootPath.length() + 1);
+            int skipLength = rootPath.length() + 1;
+            if(rootPath.endsWith(File.separator)) {
+                // If the last char is File.separator (such as C:\ deploy path), then we need to
+                // reduce the length by one, otherwise the deployment will remove parts of the correct path
+                skipLength--;
+            }
+            path = fileOrDir.getAbsolutePath().substring(skipLength);
         }
 
         path = convertPath(path);

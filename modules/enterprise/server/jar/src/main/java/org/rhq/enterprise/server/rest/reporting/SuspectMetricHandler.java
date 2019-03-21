@@ -69,7 +69,7 @@ public class SuspectMetricHandler extends AbstractRestBean implements SuspectMet
 
                 CsvWriter<MeasurementOOBComposite> csvWriter = new CsvWriter<MeasurementOOBComposite>();
                 csvWriter.setColumns("resourceName", "ancestry", "scheduleName", "formattedBaseband",
-                    "formattedOutlier", "factor");
+                    "formattedOutlier", "factor", "timestamp");
 
                 csvWriter.setPropertyConverter("ancestry", new PropertyConverter<MeasurementOOBComposite>() {
                     @Override
@@ -77,6 +77,8 @@ public class SuspectMetricHandler extends AbstractRestBean implements SuspectMet
                         return parseAncestry(composite.getResourceAncestry());
                     }
                 });
+
+                csvWriter.setPropertyConverter("timestamp", csvWriter.DATE_CONVERTER);
 
                 output.write((getHeader() + "\n").getBytes());
                 for (MeasurementOOBComposite composite : query) {
@@ -89,7 +91,7 @@ public class SuspectMetricHandler extends AbstractRestBean implements SuspectMet
     }
 
     private String getHeader() {
-        return "Resource,Ancestry,Metric,Band,Outlier,Out of Range Factor (%)";
+        return "Resource,Ancestry,Metric,Band,Outlier,Out of Range Factor (%),Date/Time";
     }
 
     private void applyFormatting(MeasurementOOBComposite oob) {

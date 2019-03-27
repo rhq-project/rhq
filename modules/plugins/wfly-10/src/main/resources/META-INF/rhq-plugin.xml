@@ -9065,7 +9065,7 @@
           <resource-configuration>
             <c:simple-property name="initial-wait-timeout" required="false" type="long" readOnly="false" defaultValue="10000" description="Period, in ms, to wait for an initial broadcast to give us at least one node in the cluster. The default value is 10000."/>
             <c:simple-property name="refresh-timeout" required="false" type="long" readOnly="false" defaultValue="10000" description="Period the discovery group waits after receiving the last broadcast from a particular server before removing that server&apos;s connector pair entry from its list. The default value is 10000."/>
-            <c:simple-property name="socket-binding" required="true" type="string" readOnly="false" description="The discovery group socket binding.">
+            <c:simple-property name="socket-binding" required="false" type="string" readOnly="false" description="The discovery group socket binding.">
               <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup ProfileBaseResource.plugin=&pluginName;" expressionScope="baseResource"/>
             </c:simple-property>
           </resource-configuration>
@@ -15985,7 +15985,7 @@
         <resource-configuration>
           <c:simple-property name="initial-wait-timeout" required="false" type="long" readOnly="false" defaultValue="10000" description="Period, in ms, to wait for an initial broadcast to give us at least one node in the cluster. The default value is 10000."/>
           <c:simple-property name="refresh-timeout" required="false" type="long" readOnly="false" defaultValue="10000" description="Period the discovery group waits after receiving the last broadcast from a particular server before removing that server&apos;s connector pair entry from its list. The default value is 10000."/>
-          <c:simple-property name="socket-binding" required="true" type="string" readOnly="false" description="The discovery group socket binding.">
+          <c:simple-property name="socket-binding" required="false" type="string" readOnly="false" description="The discovery group socket binding.">
             <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup" expressionScope="baseResource"/>
           </c:simple-property>
         </resource-configuration>

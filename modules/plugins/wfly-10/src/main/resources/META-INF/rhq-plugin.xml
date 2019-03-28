@@ -3348,7 +3348,7 @@
             </plugin-configuration>
 
             <resource-configuration>
-                <c:simple-property name="io-threads" required="false" type="integer" readOnly="true" description="Specify the number of I/O threads to create for the worker.  If not specified, a default will be chosen, which is calculated by cpuCount * 2"/>
+                <c:simple-property name="io-threads" required="true" type="integer" readOnly="true" description="Specify the number of I/O threads to create for the worker.  If not specified, a default will be chosen, which is calculated by cpuCount * 2"/>
                 <c:simple-property name="stack-size" required="false" type="long" readOnly="true" defaultValue="0" description="The stack size (in bytes) to attempt to use for worker threads. The default value is 0."/>
                 <c:simple-property name="task-keepalive" required="false" type="integer" readOnly="true" defaultValue="60" description="Specify the number of milliseconds to keep non&#45;core task threads alive. The default value is 60."/>
                 <c:simple-property name="task-max-threads" required="false" type="integer" readOnly="true" description="Specify the maximum number of threads for the worker task thread pool.If not set, default value used which is calculated by formula cpuCount * 16"/>
@@ -7364,7 +7364,7 @@
             </plugin-configuration>
 
             <resource-configuration>
-                <c:simple-property name="io-threads" required="false" type="integer" readOnly="false" description="Specify the number of I/O threads to create for the worker.  If not specified, a default will be chosen, which is calculated by cpuCount * 2"/>
+                <c:simple-property name="io-threads" required="true" type="integer" readOnly="false" description="Specify the number of I/O threads to create for the worker.  If not specified, a default will be chosen, which is calculated by cpuCount * 2"/>
                 <c:simple-property name="stack-size" required="false" type="long" readOnly="false" defaultValue="0" description="The stack size (in bytes) to attempt to use for worker threads. The default value is 0."/>
                 <c:simple-property name="task-keepalive" required="false" type="integer" readOnly="false" defaultValue="60" description="Specify the number of milliseconds to keep non&#45;core task threads alive. The default value is 60."/>
                 <c:simple-property name="task-max-threads" required="false" type="integer" readOnly="false" description="Specify the maximum number of threads for the worker task thread pool.If not set, default value used which is calculated by formula cpuCount * 16"/>
@@ -10080,7 +10080,7 @@
           </plugin-configuration>
 
           <resource-configuration>
-              <c:simple-property name="io-threads" required="false" type="integer" readOnly="false" description="Specify the number of I/O threads to create for the worker.  If not specified, a default will be chosen, which is calculated by cpuCount * 2"/>
+              <c:simple-property name="io-threads" required="true" type="integer" readOnly="false" description="Specify the number of I/O threads to create for the worker.  If not specified, a default will be chosen, which is calculated by cpuCount * 2"/>
               <c:simple-property name="stack-size" required="false" type="long" readOnly="false" defaultValue="0" description="The stack size (in bytes) to attempt to use for worker threads. The default value is 0."/>
               <c:simple-property name="task-keepalive" required="false" type="integer" readOnly="false" defaultValue="60" description="Specify the number of milliseconds to keep non&#45;core task threads alive. The default value is 60."/>
               <c:simple-property name="task-max-threads" required="false" type="integer" readOnly="false" description="Specify the maximum number of threads for the worker task thread pool.If not set, default value used which is calculated by formula cpuCount * 16"/>

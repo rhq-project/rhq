@@ -6542,7 +6542,9 @@
           <c:simple-property name="encoding" required="false" type="string" readOnly="true" description="The character encoding used by this Handler."/>
           &logFileReadOnly;
           &logFilterReadOnly;
-          <c:simple-property name="formatter" required="false" type="string" readOnly="true" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n" description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
+            <c:simple-property name="formatter" required="false" type="string" readOnly="true"
+                               description="Defines a formatter. Only allowed if named-formatter is not set. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
+            <c:simple-property name="named-formatter" required="false" type="string" readOnly="true" description="The name of the defined formatter to be used on the handler. Only allowed if formatter is not set."/>
           &logLevelReadOnly;
           <c:simple-property name="suffix" required="true" type="string" readOnly="true" description="Set the suffix string.  The string is in a format which can be understood by java.text.SimpleDateFormat. The period of the rotation is automatically calculated based on the suffix."/>
         </resource-configuration>
@@ -10614,8 +10616,9 @@
         <c:simple-property name="encoding" required="false" type="string" readOnly="false" description="The character encoding used by this Handler."/>
         &logFile;
         &logFilter;
-        <c:simple-property name="formatter" required="false" type="string" readOnly="false" defaultValue="&#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n"
-                           description="Defines a formatter. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
+        <c:simple-property name="formatter" required="false" type="string" readOnly="false"
+                           description="Defines a formatter. Only allowed if named-formatter is not set. The default value is &#37;d{HH&#58;mm&#58;ss,SSS} &#37;&#45;5p &#91;&#37;c&#93; (&#37;t) &#37;s&#37;E&#37;n."/>
+        <c:simple-property name="named-formatter" required="false" type="string" readOnly="false" description="The name of the defined formatter to be used on the handler. Only allowed if formatter is not set."/>
         &logLevel;
         <c:simple-property name="suffix" required="true" type="string" readOnly="false" description="Set the suffix string.  The string is in a format which can be understood by java.text.SimpleDateFormat. The period of the rotation is automatically calculated based on the suffix."/>
       </resource-configuration>

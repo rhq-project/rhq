@@ -1,11 +1,21 @@
 package org.rhq.modules.plugins.wildfly10;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.definition.PropertySimpleType;
+import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.modules.plugins.wildfly10.json.Address;
@@ -17,6 +27,53 @@ import org.rhq.modules.plugins.wildfly10.json.Result;
  * @author Heiko W. Rupp
  */
 public class NamingComponent extends BaseComponent implements OperationFacet {
+    private static final String BINDING_TYPE = "Binding";
+    private static final String ENVIRONMENT = "environment";
+    @Override
+    public CreateResourceReport createResource(CreateResourceReport report) {
+        ConfigurationDefinition configDef = report.getResourceType().getResourceConfigurationDefinition().copy();
+        if (report.getResourceType().getName().equals(BINDING_TYPE)) {
+            Configuration resourceConfiguration = report.getResourceConfiguration();
+            PropertyList prop = (PropertyList)resourceConfiguration.get(ENVIRONMENT);
+            if (prop != null) {
+                List<Property> embeddedProps = prop.getList();
+
+                /* Modify definition on-fly*/
+                Map<String, PropertyDefinition> definitions = configDef.getPropertyDefinitions();
+                PropertyDefinitionList envDefinition = (PropertyDefinitionList)definitions.get(ENVIRONMENT);
+                PropertyDefinitionMap envDefinitionMap = new PropertyDefinitionMap(envDefinition.getName(),
+                        envDefinition.getDescription(), envDefinition.isRequired());
+                definitions.put(ENVIRONMENT, envDefinitionMap);
+
+                /* Modify resource configuration on-fly*/
+                PropertyMap environmentMap = new PropertyMap();
+                environmentMap.setName(ENVIRONMENT);
+                Map<String, Property> results = new HashMap<String, Property>();
+                for (Property inner : embeddedProps) {
+                    PropertyMap propMap = (PropertyMap) inner;
+                    PropertySimple propName = ((PropertySimple) propMap.get("name"));
+                    PropertySimple propValue = ((PropertySimple) propMap.get("value"));
+                    if (propName != null && propValue != null ) {
+                        PropertySimple propS = new PropertySimple();
+                        propS.setName(propName.getStringValue());
+                        propS.setValue(propValue.getStringValue());
+                        results.put(propName.getStringValue(), propS);
+                        // Add to "ghost" definition
+                        envDefinitionMap.put(new PropertyDefinitionSimple(propName.getStringValue(),
+                                "", true, PropertySimpleType.STRING));
+                    }
+
+                }
+                environmentMap.setMap(results);
+                resourceConfiguration.put(environmentMap);
+            }
+            ASConnection connection = getASConnection();
+            CreateResourceDelegate delegate = new CreateResourceDelegate(configDef, connection, address);
+            return delegate.createResource(report);
+
+        }
+        return super.createResource(report);
+    }
 
     @Override
     public OperationResult invokeOperation(String name,

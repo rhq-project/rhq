@@ -190,6 +190,13 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
         return serverAddress;
     }
 
+    protected Address getProfileAddress() throws Exception {
+        String group = this.pluginConfiguration.getSimpleValue("group");
+        Address groupAddress = new Address("server-group", group);
+        String profile = readAttribute(groupAddress, "profile");
+        return new Address("profile", profile);
+    }
+
     @Override
     protected String getSocketBindingGroup() {
         String socketBindingGroup;

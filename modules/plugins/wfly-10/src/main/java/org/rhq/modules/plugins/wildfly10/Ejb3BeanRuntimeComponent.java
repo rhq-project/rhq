@@ -322,14 +322,14 @@ public class Ejb3BeanRuntimeComponent extends BaseComponent<BaseComponent<?>> {
             return;
         }
         Address ejbAddress;
-
-        if ((BaseComponent<?>) getServerComponent() instanceof HostControllerComponent) {
-            ejbAddress = new Address(findManagedASServerComponent().getServerAddress());
-        } else {
-            ejbAddress = new Address(getServerComponent().getServerAddress());
-        }
-        ejbAddress.add("subsystem", "ejb3");
         try {
+            if ((BaseComponent<?>) getServerComponent() instanceof HostControllerComponent) {
+                ejbAddress = new Address(findManagedASServerComponent().getProfileAddress());
+            } else {
+                ejbAddress = new Address(getServerComponent().getServerAddress());
+            }
+            ejbAddress.add("subsystem", "ejb3");
+
             ejb3StatisticsEnabled = readAttribute(ejbAddress, "enable-statistics", Boolean.class);
             if (!Boolean.TRUE.equals(ejb3StatisticsEnabled)) {
                 getLog().debug("Enabling global EJB3 statistics");

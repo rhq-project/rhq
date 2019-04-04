@@ -4006,9 +4006,8 @@
         </plugin-configuration>
 
         <resource-configuration>
-          <c:simple-property name="path" required="false" type="string" readOnly="true" description="The directory to store persistent timer information in"/>
-          <c:simple-property name="relative-to" required="false" type="string" readOnly="true" description="The relative path that is used to resolve the timer data store location"/>
-          <c:simple-property name="thread-pool-name" required="false" type="string" readOnly="true" description="The name of the thread pool used to run timer service invocations"/>
+          <c:simple-property name="default-data-store" required="true" type="string" readOnly="true" description="The default data store used for persistent timers"/>
+          <c:simple-property name="thread-pool-name" required="true" type="string" readOnly="true" description="The name of the thread pool used to run timer service invocations"/>
         </resource-configuration>
       </service>
     </service>
@@ -7899,9 +7898,8 @@
         </plugin-configuration>
 
         <resource-configuration>
-          <c:simple-property name="path" required="false" type="string" readOnly="false" description="The directory to store persistent timer information in"/>
-          <c:simple-property name="relative-to" required="false" type="string" readOnly="false" description="The relative path that is used to resolve the timer data store location"/>
-          <c:simple-property name="thread-pool-name" required="false" type="string" readOnly="false" description="The name of the thread pool used to run timer service invocations"/>
+          <c:simple-property name="default-data-store" required="true" type="string" readOnly="false" description="The default data store used for persistent timers"/>
+          <c:simple-property name="thread-pool-name" required="true" type="string" readOnly="false" description="The name of the thread pool used to run timer service invocations"/>
         </resource-configuration>
       </service>
     </service>
@@ -13574,9 +13572,8 @@
       </plugin-configuration>
 
       <resource-configuration>
-        <c:simple-property name="path" required="false" type="string" readOnly="false" description="The directory to store persistent timer information in"/>
-        <c:simple-property name="relative-to" required="false" type="string" readOnly="false" description="The relative path that is used to resolve the timer data store location"/>
-        <c:simple-property name="thread-pool-name" required="false" type="string" readOnly="false" description="The name of the thread pool used to run timer service invocations"/>
+        <c:simple-property name="default-data-store" required="true" type="string" readOnly="false" description="The default data store used for persistent timers"/>
+        <c:simple-property name="thread-pool-name" required="true" type="string" readOnly="false" description="The name of the thread pool used to run timer service invocations"/>
       </resource-configuration>
     </service>
 

@@ -639,7 +639,7 @@ SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.name(), ""
             //
             Map<String, String> entry = new HashMap<String, String>();
             Attribute nameAttribute = si.getAttributes().get("cn");
-            if (nameAttribute == null) {
+            if (nameAttribute == null || nameAttribute.get() == null) {
                 continue;
             }
             String name = ((String) nameAttribute.get()).trim();

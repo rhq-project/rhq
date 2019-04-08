@@ -3341,7 +3341,7 @@
 
         <service name="Worker (Managed Server)"
                  discovery="SubsystemDiscovery"
-                 class="BaseComponent"
+                 class="WorkerComponent"
                  createDeletePolicy="neither">
             <plugin-configuration>
                 <c:simple-property name="path" readOnly="true" default="worker"/>
@@ -7356,7 +7356,7 @@
 
         <service name="Worker (Profile)"
                  discovery="SubsystemDiscovery"
-                 class="BaseComponent"
+                 class="WorkerComponent"
                  createDeletePolicy="both">
             <plugin-configuration>
                 <c:simple-property name="path" readOnly="true" default="worker"/>
@@ -10069,7 +10069,7 @@
 
       <service name="Worker"
                discovery="SubsystemDiscovery"
-               class="BaseComponent"
+               class="WorkerComponent"
                createDeletePolicy="both">
           <plugin-configuration>
               <c:simple-property name="path" readOnly="true" default="worker"/>

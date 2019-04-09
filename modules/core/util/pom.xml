@@ -9,7 +9,7 @@
   </parent>
 
   <artifactId>rhq-core-util</artifactId>
-  <version>4.12.0.JON330GA-redhat-1</version>
+  <version>4.12.0.JON330GA-redhat-2</version>
   <packaging>jar</packaging>
 
   <name>RHQ Utilities</name>

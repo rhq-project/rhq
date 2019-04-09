@@ -13031,11 +13031,11 @@
 
 	&loginModuleResourceConfig;
 
-    <service name="Login Module Stack" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
+    <service name="Authentication Modules (Jaspi)" discovery="ModuleOptionsDiscoveryComponent" class="ModuleOptionsComponent"
       createDeletePolicy="both">
 
       <plugin-configuration>
-        <c:simple-property name="path" readOnly="true" default="login-module-stack" />
+        <c:simple-property name="path" readOnly="true" default="auth-modules" />
       </plugin-configuration>
 
 	 &loginModuleResourceConfig;

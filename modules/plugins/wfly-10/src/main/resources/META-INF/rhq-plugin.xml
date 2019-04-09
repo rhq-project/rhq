@@ -6055,13 +6055,15 @@
           <metric property="started" dataType="trait" description="Whether the broadcast group is started."/>
 
           <resource-configuration>
-            <c:simple-property name="broadcast-period" required="false" type="long" readOnly="false" defaultValue="2000" description="The period in milliseconds between consecutive broadcasts. The default value is 2000."/>
-            <c:list-property name="connectors" required="false" description="Specifies the names of connectors that will be broadcast." >
+            <c:simple-property name="broadcast-period" required="false" type="long" readOnly="true" defaultValue="2000" description="The period in milliseconds between consecutive broadcasts. The default value is 2000."/>
+            <c:list-property name="connectors" required="false" readOnly="true" description="Specifies the names of connectors that will be broadcast." >
               <c:simple-property name="connectors" />
             </c:list-property>
-            <c:simple-property name="socket-binding" required="true" type="string" readOnly="false" description="The broadcast group socket binding.">
+            <c:simple-property name="socket-binding" required="false" type="string" readOnly="true" description="The broadcast group socket binding. Alternative to jgroups-channel">
               <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup" expressionScope="baseResource"/>
             </c:simple-property>
+            <c:simple-property name="jgroups-channel" required="false" type="string" readOnly="true" description="The name used by a JGroups channel to join a cluster. Alternative to socket-binding."/>
+            <c:simple-property name="jgroups-stack" required="false" type="string" readOnly="true" description="The name of a stack defined in the org.jboss.as.clustering.jgroups subsystem that is used to form a cluster. Requires jgroups-channel"/>
           </resource-configuration>
         </service>
 
@@ -8973,9 +8975,11 @@
             <c:list-property name="connectors" required="false" description="Specifies the names of connectors that will be broadcast." >
               <c:simple-property name="connectors" />
             </c:list-property>
-            <c:simple-property name="socket-binding" required="true" type="string" readOnly="false" description="The broadcast group socket binding.">
+            <c:simple-property name="socket-binding" required="false" type="string" readOnly="false" description="The broadcast group socket binding. Alternative to jgroups-channel">
               <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup ProfileBaseResource.plugin=&pluginName;" expressionScope="baseResource"/>
             </c:simple-property>
+            <c:simple-property name="jgroups-channel" required="false" type="string" readOnly="false" description="The name used by a JGroups channel to join a cluster. Alternative to socket-binding."/>
+            <c:simple-property name="jgroups-stack" required="false" type="string" readOnly="false" description="The name of a stack defined in the org.jboss.as.clustering.jgroups subsystem that is used to form a cluster. Requires jgroups-channel"/>
           </resource-configuration>
         </service>
 
@@ -15877,9 +15881,11 @@
           <c:list-property name="connectors" required="false" description="Specifies the names of connectors that will be broadcast.">
             <c:simple-property name="connectors"/>
           </c:list-property>
-          <c:simple-property name="socket-binding" required="true" type="string" readOnly="false" description="The broadcast group socket binding.">
+          <c:simple-property name="socket-binding" required="false" type="string" readOnly="false" description="The broadcast group socket binding. Alternative to jgroups-channel">
             <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup"/>
           </c:simple-property>
+          <c:simple-property name="jgroups-channel" required="false" type="string" readOnly="false" description="The name used by a JGroups channel to join a cluster. Alternative to socket-binding."/>
+          <c:simple-property name="jgroups-stack" required="false" type="string" readOnly="false" description="The name of a stack defined in the org.jboss.as.clustering.jgroups subsystem that is used to form a cluster. Requires jgroups-channel"/>
         </resource-configuration>
       </service>
 

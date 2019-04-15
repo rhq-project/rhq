@@ -33,38 +33,42 @@ public class NamingComponent extends BaseComponent implements OperationFacet {
 
     @Override
     public CreateResourceReport createResource(CreateResourceReport report) {
+        ConfigurationDefinition configDef = report.getResourceType().getResourceConfigurationDefinition().copy();
         if (report.getResourceType().getName().equals(BINDING_TYPE)) {
             Configuration resourceConfiguration = report.getResourceConfiguration();
             PropertyList prop = (PropertyList)resourceConfiguration.get(ENVIRONMENT);
-            List<Property> embeddedProps = prop.getList();
+            if (prop != null) {
+                List<Property> embeddedProps = prop.getList();
 
-            /* Modify definition on-fly*/
-            ConfigurationDefinition configDef = report.getResourceType().getResourceConfigurationDefinition().copy();
-            Map<String, PropertyDefinition> definitions = configDef.getPropertyDefinitions();
-            PropertyDefinitionList envDefinition = (PropertyDefinitionList)definitions.get(ENVIRONMENT);
-            PropertyDefinitionMap envDefinitionMap = new PropertyDefinitionMap(envDefinition.getName(),
-                    envDefinition.getDescription(), envDefinition.isRequired());
-            definitions.put(ENVIRONMENT, envDefinitionMap);
+                /* Modify definition on-fly*/
+                Map<String, PropertyDefinition> definitions = configDef.getPropertyDefinitions();
+                PropertyDefinitionList envDefinition = (PropertyDefinitionList) definitions.get(ENVIRONMENT);
+                PropertyDefinitionMap envDefinitionMap = new PropertyDefinitionMap(envDefinition.getName(),
+                        envDefinition.getDescription(), envDefinition.isRequired());
+                definitions.put(ENVIRONMENT, envDefinitionMap);
 
-            /* Modify resource configuration on-fly*/
-            PropertyMap environmentMap = new PropertyMap();
-            environmentMap.setName(ENVIRONMENT);
-            Map<String, Property> results = new HashMap<String, Property>();
-            for (Property inner : embeddedProps) {
-                PropertyMap propMap = (PropertyMap) inner;
-                PropertySimple propName = ((PropertySimple) propMap.get("name"));
-                PropertySimple propValue = ((PropertySimple) propMap.get("value"));
-                PropertySimple propS = new PropertySimple();
-                propS.setName(propName.getStringValue());
-                propS.setValue(propValue.getStringValue());
-                results.put(propName.getStringValue(), propS);
-                // Add to "ghost" definition
-                envDefinitionMap.put(new PropertyDefinitionSimple(propName.getStringValue(),
-                        "", true, PropertySimpleType.STRING));
+                /* Modify resource configuration on-fly*/
+                PropertyMap environmentMap = new PropertyMap();
+                environmentMap.setName(ENVIRONMENT);
+                Map<String, Property> results = new HashMap<String, Property>();
+                for (Property inner : embeddedProps) {
+                    PropertyMap propMap = (PropertyMap) inner;
+                    PropertySimple propName = ((PropertySimple) propMap.get("name"));
+                    PropertySimple propValue = ((PropertySimple) propMap.get("value"));
+                    if (propName != null && propValue != null ) {
+                        PropertySimple propS = new PropertySimple();
+                        propS.setName(propName.getStringValue());
+                        propS.setValue(propValue.getStringValue());
+                        results.put(propName.getStringValue(), propS);
+                        // Add to "ghost" definition
+                        envDefinitionMap.put(new PropertyDefinitionSimple(propName.getStringValue(),
+                                "", true, PropertySimpleType.STRING));
+                    }
 
+                }
+                environmentMap.setMap(results);
+                resourceConfiguration.put(environmentMap);
             }
-            environmentMap.setMap(results);
-            resourceConfiguration.put(environmentMap);
             ASConnection connection = getASConnection();
             CreateResourceDelegate delegate = new CreateResourceDelegate(configDef, connection, address);
             return delegate.createResource(report);

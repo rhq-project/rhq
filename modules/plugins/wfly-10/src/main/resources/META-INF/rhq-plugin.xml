@@ -2601,6 +2601,7 @@
             <c:simple-property name="queue-flush-interval" required="false" type="long" readOnly="true" description="In ASYNC mode, this attribute controls how often the asynchronous thread used to flush the replication queue runs. This should be a positive integer which represents thread wakeup time in milliseconds."/>
             <c:simple-property name="queue-size" required="false" type="integer" readOnly="true" description="In ASYNC mode, this attribute can be used to trigger flushing of the queue when it reaches a specific threshold."/>
             <c:simple-property name="remote-timeout" required="false" type="long" readOnly="true" description="In SYNC mode, the timeout (in ms) used to wait for an acknowledgment when making a remote call, after which the call is aborted and an exception is thrown."/>
+            <c:simple-property name="segments" required="false" type="integer" readOnly="true" default="80" description="Controls the number of hash space segments which is the granularity for key distribution in the cluster. Value must be strictly positive."/>
           </resource-configuration>
         </service>
 
@@ -13895,6 +13896,7 @@
           <c:simple-property name="queue-flush-interval" required="false" type="long" readOnly="false" default="10" description="In ASYNC mode, this attribute controls how often the asynchronous thread used to flush the replication queue runs. This should be a positive integer which represents thread wakeup time in milliseconds."/>
           <c:simple-property name="queue-size" required="false" type="integer" readOnly="false" default="0" description="In ASYNC mode, this attribute can be used to trigger flushing of the queue when it reaches a specific threshold."/>
           <c:simple-property name="remote-timeout" required="false" type="long" readOnly="false" default="17500" description="In SYNC mode, the timeout (in ms) used to wait for an acknowledgment when making a remote call, after which the call is aborted and an exception is thrown."/>
+          <c:simple-property name="segments" required="false" type="integer" readOnly="false" default="80" description="Controls the number of hash space segments which is the granularity for key distribution in the cluster. Value must be strictly positive."/>
         </resource-configuration>
       </service>
 

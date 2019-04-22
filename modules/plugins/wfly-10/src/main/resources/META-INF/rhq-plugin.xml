@@ -12208,32 +12208,6 @@
       </resource-configuration>
     </service>
 
-    <service name="Entity Bean Runtime"
-             class="Ejb3BeanRuntimeComponent"
-             discovery="VersionedRuntimeDiscovery"
-             description="Entity bean component included in the deployment.">
-
-      <plugin-configuration>
-        <c:simple-property name="path" default="entity-bean" readOnly="true"/>
-      </plugin-configuration>
-
-      <metric property="pool-available-count" description="The number of available (i.e. not in use) instances in the pool."/>
-      <metric property="pool-create-count" measurementType="trendsup" description="The number of bean instances that have been created."/>
-      <metric property="pool-current-size" description="The current size of the pool."/>
-      <metric property="pool-max-size" description="The maximum size of the pool."/>
-      <metric property="pool-remove-count" measurementType="trendsup" description="The number of bean instances that have been removed."/>
-      &ejb3BeanStats;
-
-      <resource-configuration>
-        <c:simple-property name="component-class-name" required="false" type="string" readOnly="true" description="The component&apos;s class name."/>
-        <c:list-property name="declared-roles" description="The roles declared (via @DeclareRoles) on this EJB component.">
-          <c:simple-property name="declared-roles"/>
-        </c:list-property>
-        <c:simple-property name="run-as-role" required="false" type="string" readOnly="true" description="The run-as role (if any) for this EJB component."/>
-        <c:simple-property name="security-domain" required="false" type="string" readOnly="true" description="The security domain for this EJB component."/>
-      </resource-configuration>
-    </service>
-
     <service name="Stateful Session Bean Runtime"
              class="Ejb3BeanRuntimeComponent"
              discovery="VersionedRuntimeDiscovery"

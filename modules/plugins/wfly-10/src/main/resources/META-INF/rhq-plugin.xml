@@ -6536,7 +6536,7 @@
       <service name="Periodic Rotating File Handler (Managed Server)"
                discovery="SubsystemDiscovery"
                createDeletePolicy="neither"
-               class="BaseComponent">
+               class="PeriodicRotatingFileHandlerComponent">
 
         <plugin-configuration>
           <c:simple-property name="path" readOnly="true" default="periodic-rotating-file-handler"/>
@@ -10592,7 +10592,7 @@
     <service name="Periodic Rotating File Handler"
              discovery="SubsystemDiscovery"
              createDeletePolicy="both"
-             class="BaseComponent">
+             class="PeriodicRotatingFileHandlerComponent">
 
       <plugin-configuration>
         <c:simple-property name="path" readOnly="true" default="periodic-rotating-file-handler"/>

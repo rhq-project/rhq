@@ -971,6 +971,11 @@
      <c:simple-property name="handoff-executor" displayName="Handoff Executor" required="false" type="string" readOnly="false" description="An executor to delegate tasks to in the event that a task cannot be accepted. If not specified, tasks that cannot be accepted will be silently discarded."/>
 '>
 
+    <!ENTITY sharedThreadPoolBlockingResourceConfig '
+     <c:simple-property name="allow-core-timeout" required="false" type="boolean" readOnly="false" defaultValue="false" displayName="Allow Core Timeout" description="Whether core threads may time out. The default value is false."/>
+     <c:simple-property name="core-threads:expr" required="false" type="integer" readOnly="false" displayName="Core Threads" description="The core thread pool size which is smaller than the maximum pool size. If undefined, the core thread pool size is the same as the maximum thread pool size."/>
+'>
+
     <!ENTITY threadPoolTemplateResourceConfig '
         <c:simple-property name="__type" readOnly="true" default="scheduled-thread-pool" displayName="Thread Pool Type" description="Thread pool type">
           <c:property-options>
@@ -3009,7 +3014,7 @@
         <service name="Long Running Thread Pool (Managed Server)"
                  class="BaseComponent"
                  discovery="SubsystemDiscovery"
-                 description="Long running thread pool executor with a bounded queue where threads submitting tasks may block.">
+                 description="A long running thread pool executor with a bounded queue where threads submitting tasks may block. Such a thread pool has a core and maximum size and a specified queue length.  When a task is submitted, if the number of running threads is less than the core size, a new thread is created.  Otherwise, if there is room in the queue, the task is enqueued. Otherwise, if the number of running threads is less than the maximum size, a new thread is created. Otherwise, the tasks are discarded.">
 
           <plugin-configuration>
             <c:simple-property name="path" readOnly="true" default="long-running-threads"/>
@@ -3045,7 +3050,7 @@
         <service name="Short Running Thread Pool (Managed Server)"
                  class="BaseComponent"
                  discovery="SubsystemDiscovery"
-                 description="Short running thread pool executor with a bounded queue where threads submitting tasks may block.">
+                 description="A short running thread pool executor with a bounded queue where threads submitting tasks may block. Such a thread pool has a core and maximum size and a specified queue length.  When a task is submitted, if the number of running threads is less than the core size, a new thread is created.  Otherwise, if there is room in the queue, the task is enqueued. Otherwise, if the number of running threads is less than the maximum size, a new thread is created. Otherwise, the tasks are discarded.">
 
           <plugin-configuration>
             <c:simple-property name="path" readOnly="true" default="short-running-threads"/>
@@ -6223,7 +6228,7 @@
         <service name="Long Running Thread Pool (Profile)"
                  class="BaseComponent"
                  discovery="SubsystemDiscovery"
-                 description="Long running thread pool executor with a bounded queue where threads submitting tasks may block."
+                 description="A long running thread pool executor with a bounded queue where threads submitting tasks may block. Such a thread pool has a core and maximum size and a specified queue length.  When a task is submitted, if the number of running threads is less than the core size, a new thread is created.  Otherwise, if there is room in the queue, the task is enqueued. Otherwise, if the number of running threads is less than the maximum size, a new thread is created. Otherwise, the tasks are discarded."
                  createDeletePolicy="both">
 
           <plugin-configuration>
@@ -6231,7 +6236,7 @@
           </plugin-configuration>
 
           <resource-configuration>
-            &sharedThreadPoolResourceConfig;
+            &sharedThreadPoolBlockingResourceConfig;
             <c:map-property name="keepalive-time" required="false" readOnly="false" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
               <c:simple-property name="time" type="long" required="false" readOnly="false" description="The time"/>
               <c:simple-property name="unit" type="string" required="false" readOnly="false" description="The time unit">
@@ -6255,7 +6260,7 @@
         <service name="Short Running Thread Pool (Profile)"
                  class="BaseComponent"
                  discovery="SubsystemDiscovery"
-                 description="Short running thread pool executor with a bounded queue where threads submitting tasks may block."
+                 description="A short running thread pool executor with a bounded queue where threads submitting tasks may block. Such a thread pool has a core and maximum size and a specified queue length.  When a task is submitted, if the number of running threads is less than the core size, a new thread is created.  Otherwise, if there is room in the queue, the task is enqueued. Otherwise, if the number of running threads is less than the maximum size, a new thread is created. Otherwise, the tasks are discarded."
                  createDeletePolicy="both">
 
           <plugin-configuration>
@@ -6263,7 +6268,7 @@
           </plugin-configuration>
 
           <resource-configuration>
-            &sharedThreadPoolResourceConfig;
+            &sharedThreadPoolBlockingResourceConfig;
             <c:map-property name="keepalive-time" required="false" readOnly="false" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
               <c:simple-property name="time" type="long" required="false" readOnly="false" description="The time"/>
               <c:simple-property name="unit" type="string" required="false" readOnly="false" description="The time unit">
@@ -11091,7 +11096,7 @@
       <service name="Long Running Thread Pool"
                class="BaseComponent"
                discovery="SubsystemDiscovery"
-               description="Long running thread pool executor with a bounded queue where threads submitting tasks may block."
+               description="A long running thread pool executor with a bounded queue where threads submitting tasks may block. Such a thread pool has a core and maximum size and a specified queue length.  When a task is submitted, if the number of running threads is less than the core size, a new thread is created.  Otherwise, if there is room in the queue, the task is enqueued. Otherwise, if the number of running threads is less than the maximum size, a new thread is created. Otherwise, the tasks are discarded."
                createDeletePolicy="both">
 
         <plugin-configuration>
@@ -11103,7 +11108,7 @@
         <metric property="rejected-count" measurementType="trendsup" description="The number of tasks that have been passed to the handoff-executor (if one is specified) or discarded."/>
 
         <resource-configuration>
-          &sharedThreadPoolResourceConfig;
+          &sharedThreadPoolBlockingResourceConfig;
           <c:map-property name="keepalive-time" required="false" readOnly="false" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
             <c:simple-property name="time" type="long" required="false" readOnly="false" description="The time"/>
             <c:simple-property name="unit" type="string" required="false" readOnly="false" description="The time unit">
@@ -11127,7 +11132,7 @@
       <service name="Short Running Thread Pool"
                class="BaseComponent"
                discovery="SubsystemDiscovery"
-               description="Short running thread pool executor with a bounded queue where threads submitting tasks may block."
+               description="A short running thread pool executor with a bounded queue where threads submitting tasks may block. Such a thread pool has a core and maximum size and a specified queue length.  When a task is submitted, if the number of running threads is less than the core size, a new thread is created.  Otherwise, if there is room in the queue, the task is enqueued. Otherwise, if the number of running threads is less than the maximum size, a new thread is created. Otherwise, the tasks are discarded."
                createDeletePolicy="both">
 
         <plugin-configuration>
@@ -11139,7 +11144,7 @@
         <metric property="rejected-count" measurementType="trendsup" description="The number of tasks that have been passed to the handoff-executor (if one is specified) or discarded."/>
 
         <resource-configuration>
-          &sharedThreadPoolResourceConfig;
+          &sharedThreadPoolBlockingResourceConfig;
           <c:map-property name="keepalive-time" required="false" readOnly="false" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
             <c:simple-property name="time" type="long" required="false" readOnly="false" description="The time"/>
             <c:simple-property name="unit" type="string" required="false" readOnly="false" description="The time unit">

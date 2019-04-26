@@ -6032,7 +6032,7 @@
 
         <service name="Broadcast Group (Managed Server)"
                  discovery="SubsystemDiscovery"
-                 class="BaseComponent"
+                 class="BroadcastGroupComponent"
                  description=""
                  createDeletePolicy="neither">
 
@@ -6065,11 +6065,12 @@
             <c:list-property name="connectors" required="false" readOnly="true" description="Specifies the names of connectors that will be broadcast." >
               <c:simple-property name="connectors" />
             </c:list-property>
-            <c:simple-property name="socket-binding" required="false" type="string" readOnly="true" description="The broadcast group socket binding. Alternative to jgroups-channel">
+            <c:simple-property name="socket-binding" required="false" type="string" readOnly="true" description="The broadcast group socket binding. Alternative to jgroups-channel. With EAP 7.2+ use jgroups-cluster attribute instead for configuration.">
               <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup" expressionScope="baseResource"/>
             </c:simple-property>
-            <c:simple-property name="jgroups-channel" required="false" type="string" readOnly="true" description="The name used by a JGroups channel to join a cluster. Alternative to socket-binding."/>
-            <c:simple-property name="jgroups-stack" required="false" type="string" readOnly="true" description="The name of a stack defined in the org.jboss.as.clustering.jgroups subsystem that is used to form a cluster. Requires jgroups-channel"/>
+            <c:simple-property name="jgroups-cluster" required="false" type="string" readOnly="true" description="The logical cluster name. Introduced in EAP 7.2. Alternative to Socket Binding. Before EAP 7.2 this attribute is silently ignored"/>
+            <c:simple-property name="jgroups-channel" required="false" type="string" readOnly="true" description="References the name of a JGroups channel. With EAP 7.2+: If undefined, the default channel will be used else jgroups-cluster will be required."/>
+            <c:simple-property name="jgroups-stack" required="false" type="string" readOnly="true" description="The name of a stack defined in the org.jboss.as.clustering.jgroups subsystem that is used to form a cluster. Before EAP 7.2 Requires jgroups-channel. With EAP 7.2+ jgroups-cluster is required instead."/>
           </resource-configuration>
         </service>
 
@@ -8968,7 +8969,7 @@
 
         <service name="Broadcast Group (Profile)"
                  discovery="SubsystemDiscovery"
-                 class="BaseComponent"
+                 class="BroadcastGroupComponent"
                  description=""
                  createDeletePolicy="both">
 
@@ -8981,11 +8982,12 @@
             <c:list-property name="connectors" required="false" description="Specifies the names of connectors that will be broadcast." >
               <c:simple-property name="connectors" />
             </c:list-property>
-            <c:simple-property name="socket-binding" required="false" type="string" readOnly="false" description="The broadcast group socket binding. Alternative to jgroups-channel">
+            <c:simple-property name="socket-binding" required="false" type="string" readOnly="false" description="The broadcast group socket binding. Alternative to jgroups-channel. With EAP 7.2+ use jgroups-cluster attribute instead for configuration">
               <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup ProfileBaseResource.plugin=&pluginName;" expressionScope="baseResource"/>
             </c:simple-property>
-            <c:simple-property name="jgroups-channel" required="false" type="string" readOnly="false" description="The name used by a JGroups channel to join a cluster. Alternative to socket-binding."/>
-            <c:simple-property name="jgroups-stack" required="false" type="string" readOnly="false" description="The name of a stack defined in the org.jboss.as.clustering.jgroups subsystem that is used to form a cluster. Requires jgroups-channel"/>
+            <c:simple-property name="jgroups-cluster" required="false" type="string" readOnly="false" description="The logical cluster name. Introduced in EAP 7.2. Alternative to Socket Binding. Before EAP 7.2 this attribute is silently ignored."/>
+            <c:simple-property name="jgroups-channel" required="false" type="string" readOnly="false" description="References the name of a JGroups channel. With EAP 7.2+: If undefined, the default channel will be used else jgroups-cluster will be required."/>
+            <c:simple-property name="jgroups-stack" required="false" type="string" readOnly="false" description="The name of a stack defined in the org.jboss.as.clustering.jgroups subsystem that is used to form a cluster. Before EAP 7.2 Requires jgroups-channel. With EAP 7.2+ jgroups-cluster is required instead."/>
           </resource-configuration>
         </service>
 
@@ -15829,7 +15831,7 @@
 
       <service name="Broadcast Group"
                discovery="SubsystemDiscovery"
-               class="BaseComponent"
+               class="BroadcastGroupComponent"
                description=""
                createDeletePolicy="both">
 
@@ -15862,11 +15864,12 @@
           <c:list-property name="connectors" required="false" description="Specifies the names of connectors that will be broadcast.">
             <c:simple-property name="connectors"/>
           </c:list-property>
-          <c:simple-property name="socket-binding" required="false" type="string" readOnly="false" description="The broadcast group socket binding. Alternative to jgroups-channel">
+          <c:simple-property name="socket-binding" required="false" type="string" readOnly="false" description="The broadcast group socket binding. Alternative to jgroups-channel. With EAP 7.2+ use jgroups-cluster attribute instead for configuration">
             <c:option-source target="configuration" expression="*/socket-binding=name:type=SocketBindingGroup"/>
           </c:simple-property>
-          <c:simple-property name="jgroups-channel" required="false" type="string" readOnly="false" description="The name used by a JGroups channel to join a cluster. Alternative to socket-binding."/>
-          <c:simple-property name="jgroups-stack" required="false" type="string" readOnly="false" description="The name of a stack defined in the org.jboss.as.clustering.jgroups subsystem that is used to form a cluster. Requires jgroups-channel"/>
+          <c:simple-property name="jgroups-cluster" required="false" type="string" readOnly="false" description="The logical cluster name. Introduced in EAP 7.2. Alternative to Socket Binding. Before EAP 7.2 this attribute is silently ignored."/>
+          <c:simple-property name="jgroups-channel" required="false" type="string" readOnly="false" description="References the name of a JGroups channel. With EAP 7.2+: If undefined, the default channel will be used else jgroups-cluster will be required."/>
+          <c:simple-property name="jgroups-stack" required="false" type="string" readOnly="false" description="The name of a stack defined in the org.jboss.as.clustering.jgroups subsystem that is used to form a cluster. Before EAP 7.2 Requires jgroups-channel. With EAP 7.2+ jgroups-cluster is required instead."/>
         </resource-configuration>
       </service>
 

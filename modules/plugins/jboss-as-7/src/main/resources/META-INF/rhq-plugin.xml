@@ -3014,7 +3014,7 @@
         <service name="Long Running Thread Pool (Managed Server)"
                  class="BaseComponent"
                  discovery="SubsystemDiscovery"
-                 description="Long running thread pool executor with a bounded queue where threads submitting tasks may block.">
+                 description="A long running thread pool executor with a bounded queue where threads submitting tasks may block. Such a thread pool has a core and maximum size and a specified queue length.  When a task is submitted, if the number of running threads is less than the core size, a new thread is created.  Otherwise, if there is room in the queue, the task is enqueued. Otherwise, if the number of running threads is less than the maximum size, a new thread is created. Otherwise, the tasks are discarded.">
 
           <plugin-configuration>
             <c:simple-property name="path" readOnly="true" default="long-running-threads"/>
@@ -3050,7 +3050,7 @@
         <service name="Short Running Thread Pool (Managed Server)"
                  class="BaseComponent"
                  discovery="SubsystemDiscovery"
-                 description="Short running thread pool executor with a bounded queue where threads submitting tasks may block.">
+                 description="A short running thread pool executor with a bounded queue where threads submitting tasks may block. Such a thread pool has a core and maximum size and a specified queue length.  When a task is submitted, if the number of running threads is less than the core size, a new thread is created.  Otherwise, if there is room in the queue, the task is enqueued. Otherwise, if the number of running threads is less than the maximum size, a new thread is created. Otherwise, the tasks are discarded.">
 
           <plugin-configuration>
             <c:simple-property name="path" readOnly="true" default="short-running-threads"/>
@@ -6228,7 +6228,7 @@
         <service name="Long Running Thread Pool (Profile)"
                  class="BaseComponent"
                  discovery="SubsystemDiscovery"
-                 description="Long running thread pool executor with a bounded queue where threads submitting tasks may block."
+                 description="A long running thread pool executor with a bounded queue where threads submitting tasks may block. Such a thread pool has a core and maximum size and a specified queue length.  When a task is submitted, if the number of running threads is less than the core size, a new thread is created.  Otherwise, if there is room in the queue, the task is enqueued. Otherwise, if the number of running threads is less than the maximum size, a new thread is created. Otherwise, the tasks are discarded."
                  createDeletePolicy="both">
 
           <plugin-configuration>
@@ -6260,7 +6260,7 @@
         <service name="Short Running Thread Pool (Profile)"
                  class="BaseComponent"
                  discovery="SubsystemDiscovery"
-                 description="Short running thread pool executor with a bounded queue where threads submitting tasks may block."
+                 description="A short running thread pool executor with a bounded queue where threads submitting tasks may block. Such a thread pool has a core and maximum size and a specified queue length.  When a task is submitted, if the number of running threads is less than the core size, a new thread is created.  Otherwise, if there is room in the queue, the task is enqueued. Otherwise, if the number of running threads is less than the maximum size, a new thread is created. Otherwise, the tasks are discarded."
                  createDeletePolicy="both">
 
           <plugin-configuration>
@@ -11096,7 +11096,7 @@
       <service name="Long Running Thread Pool"
                class="BaseComponent"
                discovery="SubsystemDiscovery"
-               description="Long running thread pool executor with a bounded queue where threads submitting tasks may block."
+               description="A long running thread pool executor with a bounded queue where threads submitting tasks may block. Such a thread pool has a core and maximum size and a specified queue length.  When a task is submitted, if the number of running threads is less than the core size, a new thread is created.  Otherwise, if there is room in the queue, the task is enqueued. Otherwise, if the number of running threads is less than the maximum size, a new thread is created. Otherwise, the tasks are discarded."
                createDeletePolicy="both">
 
         <plugin-configuration>
@@ -11132,7 +11132,7 @@
       <service name="Short Running Thread Pool"
                class="BaseComponent"
                discovery="SubsystemDiscovery"
-               description="Short running thread pool executor with a bounded queue where threads submitting tasks may block."
+               description="A short running thread pool executor with a bounded queue where threads submitting tasks may block. Such a thread pool has a core and maximum size and a specified queue length.  When a task is submitted, if the number of running threads is less than the core size, a new thread is created.  Otherwise, if there is room in the queue, the task is enqueued. Otherwise, if the number of running threads is less than the maximum size, a new thread is created. Otherwise, the tasks are discarded."
                createDeletePolicy="both">
 
         <plugin-configuration>

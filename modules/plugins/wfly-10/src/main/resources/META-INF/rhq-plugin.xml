@@ -6032,7 +6032,7 @@
 
         <service name="Broadcast Group (Managed Server)"
                  discovery="SubsystemDiscovery"
-                 class="BaseComponent"
+                 class="BroadcastGroupComponent"
                  description=""
                  createDeletePolicy="neither">
 
@@ -8969,7 +8969,7 @@
 
         <service name="Broadcast Group (Profile)"
                  discovery="SubsystemDiscovery"
-                 class="BaseComponent"
+                 class="BroadcastGroupComponent"
                  description=""
                  createDeletePolicy="both">
 
@@ -15831,7 +15831,7 @@
 
       <service name="Broadcast Group"
                discovery="SubsystemDiscovery"
-               class="BaseComponent"
+               class="BroadcastGroupComponent"
                description=""
                createDeletePolicy="both">
 

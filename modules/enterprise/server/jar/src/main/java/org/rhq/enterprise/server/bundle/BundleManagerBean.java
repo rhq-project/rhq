@@ -2697,6 +2697,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         // can assign any bundle anywhere, or leave unassigned
         if (hasManageBundleGroups) {
             BundleGroupCriteria criteria = new BundleGroupCriteria();
+            criteria.setPageControl(PageControl.getUnlimitedInstance());
             // just get all the bundle groups by using overlord and no filters
             List<BundleGroup> bundleGroups = findBundleGroupsByCriteria(subjectManager.getOverlord(), criteria);
             result.setCanBeUnassigned(true);

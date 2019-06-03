@@ -112,7 +112,7 @@ public final class PatchHandlerComponent implements ResourceComponent<ResourceCo
         boolean startUp = stop.result;
 
         try {
-            StringBuilder command = new StringBuilder("patch apply --path=").append(
+            StringBuilder command = new StringBuilder("patch apply ").append(
                 request.getPackageVersionFiles().values().iterator().next().getAbsolutePath());
 
             Configuration bundleConfig = request.getResourceDeployment().getBundleDeployment().getConfiguration();

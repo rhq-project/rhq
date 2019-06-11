@@ -42,6 +42,8 @@ import java.util.jar.JarFile;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.vfs.VFS;
+import org.jboss.vfs.VFSUtils;
 import org.jboss.vfs.VirtualFile;
 
 /**
@@ -136,7 +138,12 @@ class UpdateFolder {
                 }
             } else if (resourceFolderURL.getProtocol().equals("vfs")) {
                 URLConnection conn = resourceFolderURL.openConnection();
-                VirtualFile virtualFolder = (VirtualFile)conn.getContent();
+                VirtualFile virtualFolder = null;
+                try {
+                    virtualFolder = (VirtualFile) conn.getContent();
+                } catch (ClassCastException ex) {
+                    virtualFolder = VFS.getChild(VFSUtils.toURI(resourceFolderURL));
+                }
                 for (VirtualFile virtualChild : virtualFolder.getChildren()) {
                     if (!virtualChild.isDirectory()) {
                         files.add(new UpdateFile(virtualChild.getPathNameRelativeTo(virtualFolder.getParent())));

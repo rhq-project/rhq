@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.plugins.alertCli;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -38,6 +39,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.jandex.ClassInfo;
 import org.jboss.jandex.Index;
 import org.jboss.jandex.Indexer;
+import org.jboss.vfs.VFS;
 import org.jboss.vfs.VFSUtils;
 import org.jboss.vfs.VirtualFile;
 import org.jboss.vfs.VisitorAttributes;
@@ -160,9 +162,26 @@ public class CliComponent implements ServerPluginComponent, ControlFacet {
             return Collections.emptySet();
         }
 
-        VirtualFile virtualFile;
+        VirtualFile virtualFile = null;
         try {
             virtualFile = (VirtualFile) coreDomainPersistenceFileUrl.openConnection().getContent();
+        } catch (RuntimeException e) {
+            if (e instanceof ClassCastException) {
+                try {
+                    Object content = coreDomainPersistenceFileUrl.openConnection().getContent();
+                    if (content instanceof VirtualFile) {
+                        virtualFile = (VirtualFile) coreDomainPersistenceFileUrl.openConnection().getContent();
+                    } else {
+                        virtualFile = VFS.getChild(VFSUtils.toURI(coreDomainPersistenceFileUrl));
+                    }
+                } catch (IOException ex1) {
+                    LOG.warn(WARNING_MESSAGE_LOAD_CLASSES, ex1);
+                    return Collections.emptySet();
+                } catch (URISyntaxException ex2) {
+                    LOG.warn(WARNING_MESSAGE_LOAD_CLASSES, ex2);
+                    return Collections.emptySet();
+                }
+            }
         } catch (IOException e) {
             LOG.warn(WARNING_MESSAGE_LOAD_CLASSES, e);
             return Collections.emptySet();

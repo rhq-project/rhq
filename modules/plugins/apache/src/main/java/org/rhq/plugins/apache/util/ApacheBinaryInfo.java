@@ -49,6 +49,7 @@ public class ApacheBinaryInfo {
 
     private static final Map<String, ApacheBinaryInfo> CACHE = new HashMap<String, ApacheBinaryInfo>();
     private static final String APACHE_VERSION = "Apache/";
+    private static final String JBCS_VERSION = "JBCS httpd/";
     private static final String SERVER_BUILT = "Server built:";
     private static final String MPM_DIR = "-D APACHE_MPM_DIR=\"";
 
@@ -84,14 +85,20 @@ public class ApacheBinaryInfo {
     }
 
     private String findVersion(String binaryPath) throws Exception {
-        String line = FileUtils.findString(binaryPath, APACHE_VERSION);
+        String apacheLine = FileUtils.findString(binaryPath, APACHE_VERSION);
+        String jbcsLine = FileUtils.findString(binaryPath, JBCS_VERSION);
+        String line = (apacheLine != null) ? apacheLine : (jbcsLine != null) ? jbcsLine : null;
+
         if (line == null) {
-            throw new Exception("Unable to find '" + APACHE_VERSION + "' in: " + binaryPath);
+            throw new Exception("Unable to find '" + APACHE_VERSION + "' or '" + JBCS_VERSION + "' in: " + binaryPath);
         }
 
         int spaceIndex = line.indexOf(" ");
         if (spaceIndex != -1) {
-            line = line.substring(0, spaceIndex);
+            if(line.equals(apacheLine))
+                line = line.substring(0, spaceIndex);
+            else
+                line = line.substring(spaceIndex + 1);
         }
 
         int slashIndex = line.lastIndexOf('/');

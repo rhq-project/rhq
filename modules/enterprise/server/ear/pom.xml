@@ -488,7 +488,7 @@
                                 <artifactItem>
                                     <groupId>${project.groupId}</groupId>
                                     <artifactId>alert-cli</artifactId>
-                                    <version>${project.version}</version>
+                                    <version>${alert-cli.version}</version>
                                 </artifactItem>
 
                                 <artifactItem>

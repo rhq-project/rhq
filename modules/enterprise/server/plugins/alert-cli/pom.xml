@@ -1,8 +1,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <artifactId>rhq-enterprise-server-plugins-parent</artifactId>
         <groupId>org.rhq</groupId>
+        <artifactId>rhq-enterprise-server-plugins-parent</artifactId>
         <version>4.12.0.JON330GA</version>
     </parent>
     <groupId>org.rhq</groupId>
@@ -15,7 +15,7 @@
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-server-client-api</artifactId>
-            <version>${project.version}</version>
+            <version>${rhq-server-client-api.version}</version>
             <type>jar</type>
             <scope>compile</scope>
         </dependency>

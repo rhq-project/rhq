@@ -974,7 +974,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
     }
 
     private void createDeepCopyOfProperties(Configuration copy, boolean keepId) {
-        for (Property property : this.properties.values()) {
+        for (Property property : this.getProperties()) {
             copy.put(property.deepCopy(keepId));
         }
     }

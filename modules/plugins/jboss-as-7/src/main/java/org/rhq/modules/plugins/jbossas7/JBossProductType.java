@@ -82,7 +82,7 @@ public enum JBossProductType {
                 // and thus have no product type. So we need to check differently
                 // AS 7.0/1 use a domain api version of 1.x, while WildFly uses version 2.0+
                 // like 2.0 in "urn:jboss:domain:2.0" from <server xmlns="..." > element in standalone.xml
-                if (apiVersion.startsWith("1")) {
+                if (apiVersion.startsWith("1.")) {
                     jBossProductType = JBossProductType.AS;
                 }
             }

@@ -121,7 +121,7 @@ public enum JBossProductType {
                 throw new Exception("'slot' property not found in " + productConfFile + ".");
             }
 
-            if(apiVersion.startsWith("1")) {
+            if(apiVersion.startsWith("1.")) {
                 try {
                     String searchQuery = slot.toUpperCase();
                     if(searchQuery.equals("DV")) {

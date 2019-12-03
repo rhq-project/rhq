@@ -160,6 +160,8 @@ public class DatabaseTypeFactory {
                     database_type_class = Postgresql81DatabaseType.class;
                 } else if (db_version.startsWith("8.")) {
                     database_type_class = Postgresql8DatabaseType.class;
+                } else {
+                    database_type_class = Postgresql91DatabaseType.class;
                 }
             } else if (db_name.indexOf("oracle") != -1) {
                 if (db_version.startsWith("oracle8")) {

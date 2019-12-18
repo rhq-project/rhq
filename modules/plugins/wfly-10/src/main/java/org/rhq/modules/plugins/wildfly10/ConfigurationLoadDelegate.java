@@ -144,6 +144,10 @@ public class ConfigurationLoadDelegate implements ConfigurationFacet {
             }
             operation = new ReadChildrenResources(address, type);
             operation.addAdditionalProperty("recursive", "true");
+
+            if(groupName.endsWith("+")) {
+                operation.addAdditionalProperty("include-runtime", "true");
+            }
         } else if (groupName.startsWith("child:")) {
             String subPath = groupName.substring("child:".length());
             if (!subPath.contains("="))

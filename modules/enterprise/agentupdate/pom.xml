@@ -17,7 +17,7 @@
   <description>RHQ Agent Update</description>
 
   <properties>
-    <ant.version>1.7.1</ant.version>
+    <ant.version>1.10.8</ant.version>
   </properties>
 
   <dependencies>

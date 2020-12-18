@@ -684,19 +684,27 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 + resource.getResourceType());
         }
 
+        Subject creator = this.subjectManager.getSubjectById(creatorSubjectId);
+        try {
+            creator = this.subjectManager.loginUnauthenticated(creator.getName());
+        } catch (LoginException e) {
+            throw new IllegalStateException(
+                "Unable to temporarily login to provided resource creator user for resource creation", e);
+        }
+
         Resource existingResource = findExistingResource(resource, null);
         if (existingResource != null) {
+            if (existingResource.getInventoryStatus() != InventoryStatus.COMMITTED) {
+                existingResource.setInventoryStatus(InventoryStatus.COMMITTED);
+                existingResource.setModifiedBy(creator.getName());
+                existingResource.setItime(System.currentTimeMillis());
+                existingResource.setMtime(existingResource.getItime());
+                existingResource.setPluginConfiguration(resource.getPluginConfiguration());
+            }
+
             mergeResourceResponse = new MergeResourceResponse(existingResource.getId(), existingResource.getMtime(),
                 true);
         } else {
-            Subject creator = this.subjectManager.getSubjectById(creatorSubjectId);
-            try {
-                creator = this.subjectManager.loginUnauthenticated(creator.getName());
-            } catch (LoginException e) {
-                throw new IllegalStateException(
-                    "Unable to temporarily login to provided resource creator user for resource creation", e);
-            }
-
             Resource parentResource = this.resourceManager.getResourceById(creator, resource.getParentResource()
                 .getId());
             resource.setAgent(parentResource.getAgent());

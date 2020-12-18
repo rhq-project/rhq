@@ -217,6 +217,9 @@ public class PluginUpdate {
                 if (updated_plugin.isEnabled() && !disabled_plugin_names.contains(name)) {
                     try {
                         downloadPluginWithRetries(updated_plugin); // tries our very best to get it
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        throw e;
                     } catch (Exception e) {
                         last_error = e;
                     }
@@ -272,7 +275,7 @@ public class PluginUpdate {
      *
      * @throws Exception if, despite our best efforts, the plugin could not be downloaded
      */
-    private void downloadPluginWithRetries(Plugin plugin) throws Exception {
+    private void downloadPluginWithRetries(Plugin plugin) throws InterruptedException, Exception {
         LOG.info(AgentI18NResourceKeys.DOWNLOADING_PLUGIN, plugin.getPath());
         int attempt = 0;
         boolean keep_trying = true;
@@ -293,10 +296,7 @@ public class PluginUpdate {
                 if ((attempt < 3 || errors.contains(RemoteIOException.class.getName())) && attempt < 10) {
                     LOG.warn(AgentI18NResourceKeys.DOWNLOAD_PLUGIN_FAILURE_WILL_RETRY, plugin.getPath(), attempt,
                         sleep, errors);
-                    try {
-                        Thread.sleep(sleep);
-                    } catch (Exception e2) {
-                    }
+                    Thread.sleep(sleep);
                 } else {
                     LOG.warn(AgentI18NResourceKeys.DOWNLOAD_PLUGIN_FAILURE_WILL_NOT_RETRY, plugin.getPath(), attempt,
                         errors);
@@ -403,20 +403,11 @@ public class PluginUpdate {
                 File plugin = getPluginFile(current_plugin);
                 if (plugin.exists()) {
                     String plugin_filename = plugin.getPath();
-                    File plugin_backup = new File(plugin_filename + ".REJECTED");
-                    LOG.warn(AgentI18NResourceKeys.PLUGIN_NOT_ON_SERVER, plugin_filename, plugin_backup.getName());
-                    try {
-                        plugin_backup.delete(); // in case an old backup is for some reason still here, get rid of it
-                        boolean renamed = plugin.renameTo(plugin_backup);
-                        // note that we don't fail if we can't backup the plugin, but we will log it
-                        if (!renamed) {
-                            LOG.error(AgentI18NResourceKeys.PLUGIN_RENAME_FAILED, plugin_filename, plugin_backup
-                                .getName());
-                            plugin.delete(); // give it one last try to remove it - otherwise, the PC will still deploy it
-                        }
-                    } catch (RuntimeException e) {
-                        LOG.error(e, AgentI18NResourceKeys.PLUGIN_RENAME_FAILED, plugin_filename, plugin_backup
-                            .getName());
+                    LOG.warn(AgentI18NResourceKeys.PLUGIN_NOT_ON_SERVER, plugin_filename);
+                    boolean deleted = plugin.delete();
+                    // note that we don't fail if we can't delete the plugin, but we will log it
+                    if (!deleted) {
+                        LOG.error(AgentI18NResourceKeys.PLUGIN_DELETE_FAILED, plugin_filename);
                     }
                 }
             }

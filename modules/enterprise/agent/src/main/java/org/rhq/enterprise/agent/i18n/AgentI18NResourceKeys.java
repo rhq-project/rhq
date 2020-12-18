@@ -374,11 +374,11 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("The disabled plugin file [{0}] failed to be deleted.")
     String PLUGIN_DISABLED_PLUGIN_DELETE_FAILED = "PluginUpdate.disabled-plugin-delete-failed";
 
-    @I18NMessage("The plugin [{0}] does not exist on the Server - renaming it to [{1}] so it will not get deployed by the Plugin Container.")
+    @I18NMessage("The plugin [{0}] does not exist on the Server - deleting it so it will not get deployed by the Plugin Container.")
     String PLUGIN_NOT_ON_SERVER = "PluginUpdate.plugin-not-on-server";
 
-    @I18NMessage("Failed to rename illegitimate plugin [{0}] to [{1}].")
-    String PLUGIN_RENAME_FAILED = "PluginUpdate.plugin-rename-failed";
+    @I18NMessage("Failed to delete illegitimate plugin [{0}].")
+    String PLUGIN_DELETE_FAILED = "PluginUpdate.plugin-delete-failed";
 
     @I18NMessage("The plugin [{0}] does not yet exist - will retrieve the latest version.")
     String NEED_MISSING_PLUGIN = "PluginUpdate.need-missing-plugin";

@@ -95,6 +95,7 @@ import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.util.ResourceUtility;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
@@ -741,7 +742,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         for (ResourceUpgradeRequest request : upgradeRequests) {
             Resource existingResource = this.entityManager.find(Resource.class, request.getResourceId());
-            if (existingResource != null) {
+            if (!ResourceUtility.isResourceDoomed(existingResource)) {
                 try {
                     ResourceUpgradeResponse upgradedData = upgradeResource(existingResource, request,
                         allowGenericPropertiesUpgrade);

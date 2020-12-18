@@ -267,6 +267,8 @@ public interface ResourceManagerLocal extends ResourceManagerRemote {
 
     List<ResourceIdFlyWeight> findFlyWeights(int[] resourceIds);
 
+    boolean isResourceDoomed(int resourceId);
+
     PageList<Resource> findExplicitResourcesByResourceGroup(Subject subject, ResourceGroup group,
         PageControl pageControl);
 

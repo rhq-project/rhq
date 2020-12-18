@@ -388,6 +388,11 @@ import org.rhq.core.domain.util.Summary;
         + "  FROM Resource res " //
         + " WHERE res.id IN ( :resourceIds ) " //
         + "   AND res.inventoryStatus = 'COMMITTED' "),
+    @NamedQuery(name = Resource.QUERY_FIND_RESOURCE_EXISTS_BY_ID, query = ""
+        + "SELECT count(res.id)  "
+        + "  FROM Resource res "
+        + "WHERE res.id = :resourceId"
+        + "   AND res.inventoryStatus NOT IN ('UNINVENTORIED','DELETED')"),
     @NamedQuery(name = Resource.QUERY_FIND_BY_EXPLICIT_RESOURCE_GROUP, query = "" //
         + "SELECT DISTINCT res " //
         + "  FROM ResourceGroup rg JOIN rg.roles r JOIN r.subjects s JOIN rg.explicitResources res " //
@@ -841,6 +846,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     public static final String QUERY_FIND_IMPLICIT_IDS_BY_RESOURCE_GROUP_ADMIN = "Resource.findImplicitIdsByResourceGroup_admin";
 
     public static final String QUERY_FIND_FLY_WEIGHTS_BY_RESOURCE_IDS = "Resource.findFlyWeights";
+    public static final String QUERY_FIND_RESOURCE_EXISTS_BY_ID = "Resource.findResourceExistsById";
 
     public static final String QUERY_FIND_BY_EXPLICIT_RESOURCE_GROUP = "Resource.findByExplicitResourceGroup";
     public static final String QUERY_FIND_BY_EXPLICIT_RESOURCE_GROUP_ADMIN = "Resource.findByExplicitResourceGroup_admin";

@@ -22,7 +22,7 @@
     <json.version>${project.json.version}</json.version>
     <jboss.sasl.version>1.0.0.Final</jboss.sasl.version>
     <!-- If you change httpclient4.version make sure to update httpcore version below accordingly  -->
-    <httpclient4.version>${apache.httpcomponents.version}</httpclient4.version>
+    <httpclient4.version>4.5.13</httpclient4.version>
     <as7.version>6.1.0.Alpha</as7.version>
     <as7.url>http://download.jboss.org/jbosseap/6/jboss-eap-6.1.0.Alpha/jboss-eap-6.1.0.Alpha.zip</as7.url>
     <jboss-as-arquillian-container-managed.version>7.1.1.Final</jboss-as-arquillian-container-managed.version>

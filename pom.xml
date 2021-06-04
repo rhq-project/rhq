@@ -88,7 +88,7 @@
     <annotations.version>7.0.2</annotations.version>
     <ant.contrib.version>1.0b3</ant.contrib.version>
     <antlr.version>3.5.2</antlr.version>
-    <apache.httpcomponents.version>4.2.5</apache.httpcomponents.version>
+    <apache.httpcomponents.version>4.5.13</apache.httpcomponents.version>
     <arquillian.version>1.0.4.Final</arquillian.version> <!-- as of 6/25/2014 the latest version publically available is 1.1.4.Final, but we can't compile with that yet -->
     <arquillian.jboss.container.version>7.2.0.Final</arquillian.jboss.container.version> <!-- as of 6/25/2014 this is the latest version publically available -->
     <augeas.version>0.9.0-4</augeas.version>

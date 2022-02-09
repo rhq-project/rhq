@@ -129,7 +129,7 @@
     <hibernate-jpa-2.0-api.version>1.0.1.Final</hibernate-jpa-2.0-api.version> <!-- -redhat-2 -->
 
     <i18nlog.version>1.0.10</i18nlog.version>
-    <infinispan.version>5.2.10.Final</infinispan.version> <!-- -redhat-1 -->
+    <infinispan.version>11.0.6.Final</infinispan.version> <!-- -redhat-1 -->
 
     <jackson.version>2.0.5</jackson.version>
     <jackson-core-asl.version>1.9.13</jackson-core-asl.version>

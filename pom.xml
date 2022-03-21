@@ -156,7 +156,7 @@
     <jboss-logging.version>3.1.2.GA</jboss-logging.version>
     <jboss-modules.version>1.3.3.Final</jboss-modules.version> <!-- -redhat-1 -->
     <jboss-msc.version>1.1.5.Final</jboss-msc.version> <!-- -redhat-1 -->
-    <jboss-remoting.version>2.5.4.SP5</jboss-remoting.version>
+    <jboss-remoting.version>5.0.19.Final-redhat-00001</jboss-remoting.version>
     <jboss-remotingjmx.version>1.0.2.Final</jboss-remotingjmx.version>
     <jboss-transaction-api.version>1.0.1.Final</jboss-transaction-api.version> <!-- -redhat-2 -->
     <jboss-serialization.version>1.0.3.GA</jboss-serialization.version>

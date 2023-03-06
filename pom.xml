@@ -104,7 +104,7 @@
     <cassandra.thrift.version>0.7.0</cassandra.thrift.version>
     <cassandra.version>1.2.18-jboss-2</cassandra.version>
     <clirr.version>2.6</clirr.version>
-    <commons-beanutils.version>1.8.2</commons-beanutils.version>
+    <commons-beanutils.version>1.9.2</commons-beanutils.version>
     <commons-codec.version>1.4</commons-codec.version>
     <commons-collections.version>3.2.1</commons-collections.version>
     <commons-configuration.version>1.6</commons-configuration.version>

@@ -174,7 +174,7 @@
     <jtds.version>1.2.2</jtds.version>
     <junit.version>4.10</junit.version>
 
-    <liquibase-core.version>2.0.3</liquibase-core.version>
+    <liquibase-core.version>4.8.0</liquibase-core.version>
     <log4j.version>1.2.16</log4j.version>
 
     <mockito-core.version>1.9.0</mockito-core.version>

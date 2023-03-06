@@ -208,7 +208,7 @@
     <testng.version>6.5.2</testng.version>
     <twitter4j.version>2.2.4</twitter4j.version>
 
-    <xercesImpl.version>2.9.1-jbossas-2</xercesImpl.version> <!-- see BZ-820629 and CVE-2009-2625 -->
+    <xercesImpl.version>2.12.2</xercesImpl.version> <!-- see BZ-820629 and CVE-2009-2625 -->
     <xnio.version>3.0.10.GA</xnio.version> <!-- needed in jndi-access tests to talk to the managed AS --> <!-- was "3.0.7.GA" -->
 
 

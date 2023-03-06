@@ -123,7 +123,7 @@
 
     <getopt.version>1.0.13.redhat-4</getopt.version>
 
-    <h2.version>1.2.139</h2.version>
+    <h2.version>2.1.210</h2.version>
     <hibernate.version>4.2.13.Final</hibernate.version> <!-- -redhat-1 -->
     <hibernate-annotations.version>4.0.1.Final</hibernate-annotations.version> <!-- -redhat-2 -->
     <hibernate-jpa-2.0-api.version>1.0.1.Final</hibernate-jpa-2.0-api.version> <!-- -redhat-2 -->

@@ -29,8 +29,8 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hyperic.sigar.ProcExe;
 import org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor;
-
 import org.rhq.cassandra.util.ConfigEditor;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -128,6 +128,17 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
             commandLineBuilder.append(' ');
         }
 
+        ProcExe exec = processInfo.priorSnaphot().getExecutable();
+        String cwd;
+        String baseDir;
+        if (exec == null) {
+            cwd = null;
+            baseDir = "/";
+        } else {
+            cwd = exec.getCwd();
+            baseDir = new File(cwd).getParentFile().getAbsolutePath();
+        }
+
         pluginConfig.put(new PropertySimple(COMMAND_LINE_CONFIG_PROPERTY, commandLineBuilder.toString()));
 
         if (classpathIndex != -1 && classpathIndex + 1 < arguments.length) {
@@ -140,11 +151,13 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
                     if (!yamlConfigurationPath.isAbsolute()) {
                         try {
                             //relative path, use process CWD to find absolute path of the conf directory
-                            yamlConfigurationPath = new File(processInfo.getExecutable().getCwd(), classpathEntry);
+                            yamlConfigurationPath = new File(cwd, classpathEntry);
                         } catch (Exception e) {
                             log.error("Error creating path for yaml file.", e);
                         }
                     }
+                } else if (classpathEntry.contains("/lib/apache-cassandra-") && baseDir == null) {
+                    baseDir = new File(classpathEntry).getParentFile().getAbsolutePath();
                 }
             }
 
@@ -173,8 +186,7 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
         String resourceKey = "Cassandra (" + pluginConfig.getSimpleValue(HOST_PROPERTY) + ") " + jmxPort;
         String resourceName = RESOURCE_NAME;
 
-        String path = processInfo.getExecutable().getCwd();
-        pluginConfig.put(new PropertySimple(BASEDIR_PROPERTY, new File(path).getParentFile().getAbsolutePath()));
+        pluginConfig.put(new PropertySimple(BASEDIR_PROPERTY, baseDir));
 
         return new DiscoveredResourceDetails(context.getResourceType(), resourceKey, resourceName, null, null,
             pluginConfig, processInfo);

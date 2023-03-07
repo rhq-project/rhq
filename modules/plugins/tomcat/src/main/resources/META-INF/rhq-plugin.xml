@@ -23,6 +23,11 @@
          <c:group
             name="connection"
             displayName="Connection Info">
+	    <c:simple-property name="deployDir"
+	       displayName="Deployment Directory" 
+	       type="directory" readOnly="false"    
+	       required="false"  
+	       description="The deployment directory path of the Tomcat server."/>
             <c:simple-property
                name="installationPath"
                displayName="Catalina Home"
@@ -221,7 +226,18 @@
          dataType="trait"
          displayType="summary"
          description="Tomcat server release identifier" />
-
+      
+      <bundle-target>
+	<destination-base-dir name="Install Directory" description="The top directory where the application server is installed. (i.e. the value found in the 'installationPath' connection property)">
+	    <value-context>pluginConfiguration</value-context>
+	    <value-name>catalinaBase</value-name>
+	</destination-base-dir>
+	<destination-base-dir name="Deploy Directory" description="The deployment directory for a server">
+	    <value-context>pluginConfiguration</value-context>
+	    <value-name>deployDir</value-name>
+	</destination-base-dir>
+      </bundle-target>
+      
       <server
          name="Tomcat Server JVM"
          description="JVM of the Tomcat Server"

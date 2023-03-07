@@ -282,6 +282,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         Subject overlord = subjectManager.getOverlord();
         Resource resource = resourceManager.getResourceById(overlord, resourceId);
+        if (ResourceUtility.isResourceDoomed(resource)) {
+            throw ResourceNotFoundException.doomedResource(resourceId);
+        }
 
         // make sure the user has the proper permissions to do this
         ensureModifyPermission(subject, resource);
@@ -325,6 +328,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         Subject overlord = subjectManager.getOverlord();
         Resource resource = resourceManager.getResourceById(overlord, resourceId);
+
+        if (ResourceUtility.isResourceDoomed(resource)) {
+            throw ResourceNotFoundException.doomedResource(resourceId);
+        }
 
         // make sure the user has the proper permissions to do this
         ensureModifyPermission(subject, resource);
@@ -1373,6 +1380,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         // Make sure to unmask the configuration before persisting the update.
         Subject overlord = subjectManager.getOverlord();
         Resource resource = resourceManager.getResource(overlord, resourceId);
+        if (ResourceUtility.isResourceDoomed(resource)) {
+            throw ResourceNotFoundException.doomedResource(resourceId);
+        }
         Configuration existingResourceConfiguration = resource.getResourceConfiguration();
         ConfigurationMaskingUtility.unmaskConfiguration(newResourceConfiguration, existingResourceConfiguration);
 
@@ -1472,6 +1482,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         ResourceConfigurationUpdate current = null;
         String errorMessage = null;
+
+        if (resourceManager.isResourceDoomed(resourceId)) {
+            throw new ResourceNotFoundException(resourceId);
+        }
 
         // for efficiency, in one query fetch IN_PROGRESS and/or the current update
         Query query = entityManager
@@ -2449,7 +2463,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         Resource resource = entityManager.find(Resource.class, resourceId);
 
-        if (resource == null) {
+        if (ResourceUtility.isResourceDoomed(resource)) {
             throw new NoResultException("Cannot get live configuration for unknown resource [" + resourceId + "]");
         }
 
